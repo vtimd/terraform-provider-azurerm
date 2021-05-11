@@ -132,7 +132,7 @@ func (r WindowsWebAppResource) Arguments() map[string]*schema.Schema {
 
 		"logs": logsConfigSchema(),
 
-		"site_config": siteConfigSchema(osTypeWindows),
+		"site_config": siteConfigSchemaWindows(),
 
 		"storage_account": storageAccountSchema(),
 

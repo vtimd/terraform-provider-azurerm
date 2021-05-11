@@ -2,17 +2,16 @@ package webapp
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
-
-	"github.com/terraform-providers/terraform-provider-azuread/azuread/helpers/validate"
-
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/appservice/helpers"
 
 	"github.com/Azure/azure-sdk-for-go/services/web/mgmt/2020-12-01/web"
 	"github.com/Azure/go-autorest/autorest/date"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/terraform-providers/terraform-provider-azuread/azuread/helpers/validate"
 	apimValidate "github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/apimanagement/validate"
+	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/appservice/helpers"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/suppress"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
@@ -25,6 +24,8 @@ type SiteConfigWindows struct {
 	AlwaysOn                bool                      `tfschema:"always_on"`
 	ApiManagementConfigId   string                    `tfschema:"api_management_config_id"`
 	AppCommandLine          string                    `tfschema:"app_command_line"`
+	AutoHeal                bool                      `tfschema:"auto_heal"`
+	AutoHealSettings        []AutoHealSettingWindows  `tfschema:"auto_heal_setting"`
 	DefaultDocuments        []string                  `tfschema:"default_documents"`
 	Http2Enabled            bool                      `tfschema:"http2_enabled"`
 	IpRestriction           []helpers.IpRestriction   `tfschema:"ip_restriction"`
@@ -51,10 +52,7 @@ type SiteConfigWindows struct {
 	LinuxFxVersion          string                    `tfschema:"linux_fx_version"`
 	WindowsFxVersion        string                    `tfschema:"windows_fx_version"`
 	// TODO new properties / blocks
-	// Push  []PushSetting `tfschema:"push"` // Blocked - no programatic way to connect to a notification hub, portal only.
 	// SiteLimits []SiteLimitsSettings `tfschema:"site_limits"` // TODO - New block to (possibly) support?
-	// AutoHeal bool
-	// AutoHealRules []AutoHealRule - minefield!
 }
 
 type SiteConfigLinux struct {
@@ -93,198 +91,401 @@ type SiteConfigLinux struct {
 	// AutoHealRules []AutoHealRule
 }
 
-func siteConfigSchema(osType string) *schema.Schema {
-	siteConfigResource := &schema.Resource{
-		Schema: map[string]*schema.Schema{
-			"always_on": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Computed: true,
-			},
-
-			"api_management_config_id": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: apimValidate.ApiManagementID,
-			},
-
-			"app_command_line": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-
-			"default_documents": {
-				Type:     schema.TypeList,
-				Optional: true,
-				Computed: true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-			},
-
-			"http2_enabled": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
-			},
-
-			"ip_restriction": helpers.IpRestrictionSchema(),
-
-			"scm_use_main_ip_restriction": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
-			},
-
-			"scm_ip_restriction": helpers.IpRestrictionSchema(),
-
-			"local_mysql": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Computed: true,
-			},
-
-			"load_balancing_mode": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					"LeastRequests", // Service default
-					"WeightedRoundRobin",
-					"LeastResponseTime",
-					"WeightedTotalTraffic",
-					"RequestHash",
-					"PerSiteRoundRobin",
-				}, false),
-			},
-
-			"managed_pipeline_mode": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					string(web.Classic),
-					string(web.Integrated),
-				}, true),
-			},
-
-			"remote_debugging": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
-			},
-
-			"remote_debugging_version": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					"VS2017",
-					"VS2019",
-				}, false),
-				DiffSuppressFunc: suppress.CaseDifference,
-			},
-
-			"scm_type": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-
-			"use_32_bit_worker": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
-			},
-
-			"websockets": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
-			},
-
-			"ftps_state": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					string(web.AllAllowed),
-					string(web.Disabled),
-					string(web.FtpsOnly),
-				}, false),
-			},
-
-			"health_check_path": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-
-			"number_of_workers": {
-				Type:         schema.TypeInt,
-				Optional:     true,
-				Computed:     true,
-				ValidateFunc: validation.IntBetween(1, 100),
-			},
-
-			"minimum_tls_version": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					string(web.OneFullStopZero),
-					string(web.OneFullStopOne),
-					string(web.OneFullStopTwo),
-				}, false),
-			},
-
-			"scm_minimum_tls_version": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					string(web.OneFullStopZero),
-					string(web.OneFullStopOne),
-					string(web.OneFullStopTwo),
-				}, false),
-			},
-
-			"cors": helpers.CorsSettingsSchema(),
-
-			"auto_swap_slot_name": {
-				Type:     schema.TypeString,
-				Optional: true,
-				// TODO - Add slot name validation here?
-			},
-
-			"detailed_error_logging": {
-				Type:     schema.TypeBool,
-				Computed: true,
-			},
-
-			"linux_fx_version": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-
-			"windows_fx_version": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-		},
-	}
-	switch osType {
-	case osTypeLinux:
-		siteConfigResource.Schema["application_stack"] = linuxApplicationStackSchema()
-	default:
-		siteConfigResource.Schema["application_stack"] = windowsApplicationStackSchema()
-		siteConfigResource.Schema["virtual_application"] = virtualApplicationsSchema()
-	}
-
+func siteConfigSchemaWindows() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
 		Optional: true,
 		Computed: true,
 		MaxItems: 1,
-		Elem:     siteConfigResource,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"always_on": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+
+				"api_management_config_id": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					ValidateFunc: apimValidate.ApiManagementID,
+				},
+
+				"application_stack": windowsApplicationStackSchema(),
+
+				"app_command_line": {
+					Type:     schema.TypeString,
+					Optional: true,
+				},
+
+				"auto_heal": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					RequiredWith: []string{
+						"site_config.0.auto_heal_setting",
+					},
+				},
+
+				"auto_heal_setting": autoHealSettingSchemaWindows(),
+
+				"default_documents": {
+					Type:     schema.TypeList,
+					Optional: true,
+					Computed: true,
+					Elem: &schema.Schema{
+						Type: schema.TypeString,
+					},
+				},
+
+				"http2_enabled": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Default:  false,
+				},
+
+				"ip_restriction": helpers.IpRestrictionSchema(),
+
+				"scm_use_main_ip_restriction": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Default:  false,
+				},
+
+				"scm_ip_restriction": helpers.IpRestrictionSchema(),
+
+				"local_mysql": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+
+				"load_balancing_mode": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+					ValidateFunc: validation.StringInSlice([]string{
+						"LeastRequests", // Service default
+						"WeightedRoundRobin",
+						"LeastResponseTime",
+						"WeightedTotalTraffic",
+						"RequestHash",
+						"PerSiteRoundRobin",
+					}, false),
+				},
+
+				"managed_pipeline_mode": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+					ValidateFunc: validation.StringInSlice([]string{
+						string(web.Classic),
+						string(web.Integrated),
+					}, true),
+				},
+
+				"remote_debugging": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Default:  false,
+				},
+
+				"remote_debugging_version": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+					ValidateFunc: validation.StringInSlice([]string{
+						"VS2017",
+						"VS2019",
+					}, false),
+					DiffSuppressFunc: suppress.CaseDifference,
+				},
+
+				"scm_type": {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+
+				"use_32_bit_worker": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Default:  false,
+				},
+
+				"websockets": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Default:  false,
+				},
+
+				"ftps_state": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+					ValidateFunc: validation.StringInSlice([]string{
+						string(web.AllAllowed),
+						string(web.Disabled),
+						string(web.FtpsOnly),
+					}, false),
+				},
+
+				"health_check_path": {
+					Type:     schema.TypeString,
+					Optional: true,
+				},
+
+				"number_of_workers": {
+					Type:         schema.TypeInt,
+					Optional:     true,
+					Computed:     true,
+					ValidateFunc: validation.IntBetween(1, 100),
+				},
+
+				"minimum_tls_version": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+					ValidateFunc: validation.StringInSlice([]string{
+						string(web.OneFullStopZero),
+						string(web.OneFullStopOne),
+						string(web.OneFullStopTwo),
+					}, false),
+				},
+
+				"scm_minimum_tls_version": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+					ValidateFunc: validation.StringInSlice([]string{
+						string(web.OneFullStopZero),
+						string(web.OneFullStopOne),
+						string(web.OneFullStopTwo),
+					}, false),
+				},
+
+				"cors": helpers.CorsSettingsSchema(),
+
+				"virtual_application": virtualApplicationsSchema(),
+
+				"auto_swap_slot_name": {
+					Type:     schema.TypeString,
+					Optional: true,
+					// TODO - Add slot name validation here?
+				},
+
+				"detailed_error_logging": {
+					Type:     schema.TypeBool,
+					Computed: true,
+				},
+
+				"linux_fx_version": {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+
+				"windows_fx_version": {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
+	}
+}
+
+func siteConfigSchemaLinux() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		Computed: true,
+		MaxItems: 1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"always_on": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+
+				"api_management_config_id": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					ValidateFunc: apimValidate.ApiManagementID,
+				},
+
+				"app_command_line": {
+					Type:     schema.TypeString,
+					Optional: true,
+				},
+
+				"application_stack": linuxApplicationStackSchema(),
+
+				"auto_heal": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					RequiredWith: []string{
+						"site_config.0.auto_heal_setting",
+					},
+				},
+
+				"auto_heal_setting": autoHealSettingSchemaLinux(),
+
+				"default_documents": {
+					Type:     schema.TypeList,
+					Optional: true,
+					Computed: true,
+					Elem: &schema.Schema{
+						Type: schema.TypeString,
+					},
+				},
+
+				"http2_enabled": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Default:  false,
+				},
+
+				"ip_restriction": helpers.IpRestrictionSchema(),
+
+				"scm_use_main_ip_restriction": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Default:  false,
+				},
+
+				"scm_ip_restriction": helpers.IpRestrictionSchema(),
+
+				"local_mysql": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Computed: true,
+				},
+
+				"load_balancing_mode": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+					ValidateFunc: validation.StringInSlice([]string{
+						"LeastRequests", // Service default
+						"WeightedRoundRobin",
+						"LeastResponseTime",
+						"WeightedTotalTraffic",
+						"RequestHash",
+						"PerSiteRoundRobin",
+					}, false),
+				},
+
+				"managed_pipeline_mode": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+					ValidateFunc: validation.StringInSlice([]string{
+						string(web.Classic),
+						string(web.Integrated),
+					}, true),
+				},
+
+				"remote_debugging": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Default:  false,
+				},
+
+				"remote_debugging_version": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+					ValidateFunc: validation.StringInSlice([]string{
+						"VS2017",
+						"VS2019",
+					}, false),
+					DiffSuppressFunc: suppress.CaseDifference,
+				},
+
+				"scm_type": {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+
+				"use_32_bit_worker": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Default:  false,
+				},
+
+				"websockets": {
+					Type:     schema.TypeBool,
+					Optional: true,
+					Default:  false,
+				},
+
+				"ftps_state": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+					ValidateFunc: validation.StringInSlice([]string{
+						string(web.AllAllowed),
+						string(web.Disabled),
+						string(web.FtpsOnly),
+					}, false),
+				},
+
+				"health_check_path": {
+					Type:     schema.TypeString,
+					Optional: true,
+				},
+
+				"number_of_workers": {
+					Type:         schema.TypeInt,
+					Optional:     true,
+					Computed:     true,
+					ValidateFunc: validation.IntBetween(1, 100),
+				},
+
+				"minimum_tls_version": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+					ValidateFunc: validation.StringInSlice([]string{
+						string(web.OneFullStopZero),
+						string(web.OneFullStopOne),
+						string(web.OneFullStopTwo),
+					}, false),
+				},
+
+				"scm_minimum_tls_version": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+					ValidateFunc: validation.StringInSlice([]string{
+						string(web.OneFullStopZero),
+						string(web.OneFullStopOne),
+						string(web.OneFullStopTwo),
+					}, false),
+				},
+
+				"cors": helpers.CorsSettingsSchema(),
+
+				"auto_swap_slot_name": {
+					Type:     schema.TypeString,
+					Optional: true,
+					// TODO - Add slot name validation here?
+				},
+
+				"detailed_error_logging": {
+					Type:     schema.TypeBool,
+					Computed: true,
+				},
+
+				"linux_fx_version": {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+
+				"windows_fx_version": {
+					Type:     schema.TypeString,
+					Computed: true,
+				},
+			},
+		},
 	}
 }
 
@@ -556,6 +757,399 @@ func linuxApplicationStackSchema() *schema.Schema {
 					ValidateFunc: validation.StringIsNotEmpty,
 					RequiredWith: []string{
 						"site_config.0.application_stack.0.docker_image",
+					},
+				},
+			},
+		},
+	}
+}
+
+type AutoHealSettingWindows struct {
+	Triggers []AutoHealTriggerWindows `tfschema:"trigger"`
+	Actions  []AutoHealActionWindows  `tfschema:"action"`
+}
+
+type AutoHealSettingLinux struct {
+	Triggers []AutoHealTriggerLinux `tfschema:"trigger"`
+	Actions  []AutoHealActionLinux  `tfschema:"action"`
+}
+
+type AutoHealTriggerWindows struct {
+	Requests        []AutoHealRequestTrigger    `tfschema:"requests"`
+	PrivateMemoryKB int                         `tfschema:"private_memory_kb"` // Private should be > 102400 KB (100 MB) to 13631488 KB (13 GB)
+	StatusCodes     []AutoHealStatusCodeTrigger `tfschema:"status_code"`       // 0 or more, ranges split by `-`, ranges cannot use sub-status or win32 code
+	SlowRequests    []AutoHealSlowRequest       `tfschema:"slow_request"`
+}
+
+type AutoHealTriggerLinux struct {
+	Requests     []AutoHealRequestTrigger    `tfschema:"requests"`
+	StatusCodes  []AutoHealStatusCodeTrigger `tfschema:"status_code"` // 0 or more, ranges split by `-`, ranges cannot use sub-status or win32 code
+	SlowRequests []AutoHealSlowRequest       `tfschema:"slow_request"`
+}
+
+type AutoHealRequestTrigger struct {
+	Count    int    `tfschema:"count"`
+	Interval string `tfschema:"interval"`
+}
+
+type AutoHealStatusCodeTrigger struct {
+	StatusCodeRange string `tfschema:"status_code_range"` // Conflicts with `StatusCode`, `Win32Code`, and `SubStatus` when not a single value...
+	SubStatus       string `tfschema:"sub_status"`
+	Win32Status     string `tfschema:"win_32_status"`
+	Path            string `tfschema:"path"`
+	Count           int    `tfschema:"count"`
+	Interval        string `tfschema:"interval"` // Format - hh:mm:ss
+}
+
+type AutoHealSlowRequest struct {
+	TimeTaken int    `tfschema:"time_taken"`
+	Interval  string `tfschema:"interval"`
+	Count     int    `tfschema:"count"`
+	Path      string `tfschema:"path"`
+}
+
+type AutoHealActionWindows struct {
+	ActionType         string                 `tfschema:"action_type"`                    // Enum
+	CustomAction       []AutoHealCustomAction `tfschema:"custom_action"`                  // Max: 1, needs `action_type` to be "Custom"
+	MinimumProcessTime string                 `tfschema:"minimum_process_execution_time"` // Minimum uptime for process before action will trigger
+}
+
+type AutoHealActionLinux struct {
+	ActionType         string `tfschema:"action_type"`                    // Enum - Only `Recycle` allowed
+	MinimumProcessTime string `tfschema:"minimum_process_execution_time"` // Minimum uptime for process before action will trigger
+}
+
+type AutoHealCustomAction struct {
+	Executable string `tfschema:"executable"`
+	Parameters string `tfschema:"parameters"`
+}
+
+func autoHealSettingSchemaWindows() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		MaxItems: 1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"trigger": autoHealTriggerSchemaWindows(),
+
+				"action": autoHealActionSchemaWindows(),
+			},
+		},
+		RequiredWith: []string{
+			"site_config.0.auto_heal",
+		},
+	}
+}
+
+func autoHealSettingSchemaLinux() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		MaxItems: 1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"trigger": autoHealTriggerSchemaLinux(),
+
+				"action": autoHealActionSchemaLinux(),
+			},
+		},
+		RequiredWith: []string{
+			"site_config.0.auto_heal",
+		},
+	}
+}
+
+func autoHealActionSchemaWindows() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		MaxItems: 1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"action_type": {
+					Type:     schema.TypeString,
+					Required: true,
+					ValidateFunc: validation.StringInSlice([]string{
+						string(web.CustomAction),
+						string(web.LogEvent),
+						string(web.Recycle),
+					}, false),
+				},
+
+				"custom_action": {
+					Type:     schema.TypeList,
+					Optional: true,
+					MaxItems: 1,
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"executable": {
+								Type:         schema.TypeString,
+								Required:     true,
+								ValidateFunc: validation.StringIsNotEmpty,
+							},
+
+							"parameters": {
+								Type:         schema.TypeString,
+								Optional:     true,
+								ValidateFunc: validation.StringIsNotEmpty,
+							},
+						},
+					},
+				},
+
+				"minimum_process_execution_time": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+					//ValidateFunc: // TODO - Time in hh:mm:ss, because why not...
+				},
+			},
+		},
+	}
+}
+
+func autoHealActionSchemaLinux() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		MaxItems: 1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"action_type": {
+					Type:     schema.TypeString,
+					Required: true,
+					ValidateFunc: validation.StringInSlice([]string{
+						string(web.Recycle),
+					}, false),
+				},
+
+				"minimum_process_execution_time": {
+					Type:     schema.TypeString,
+					Optional: true,
+					Computed: true,
+					//ValidateFunc: // TODO - Time in hh:mm:ss, because why not...
+				},
+			},
+		},
+	}
+}
+
+func autoHealTriggerSchemaWindows() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		MaxItems: 1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"requests": {
+					Type:     schema.TypeList,
+					Optional: true,
+					MaxItems: 1,
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"count": {
+								Type:         schema.TypeInt,
+								Required:     true,
+								ValidateFunc: validation.IntAtLeast(1),
+							},
+
+							"interval": {
+								Type:         schema.TypeString,
+								Required:     true,
+								ValidateFunc: validation.IsRFC3339Time, // TODO should be hh:mm:ss - This is too loose, need to improve
+							},
+						},
+					},
+				},
+
+				"private_memory_kb": {
+					Type:         schema.TypeInt,
+					Optional:     true,
+					ValidateFunc: validation.IntBetween(102400, 13631488),
+				},
+
+				"status_code": {
+					Type:     schema.TypeList,
+					Optional: true,
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"status_code_range": {
+								Type:         schema.TypeString,
+								Required:     true,
+								ValidateFunc: nil, // TODO - status code range validation
+							},
+
+							"count": {
+								Type:         schema.TypeInt,
+								Required:     true,
+								ValidateFunc: validation.IntAtLeast(1),
+							},
+
+							"interval": {
+								Type:         schema.TypeString,
+								Required:     true,
+								ValidateFunc: validation.IsRFC3339Time,
+							},
+
+							"sub_status": {
+								Type:         schema.TypeString,
+								Optional:     true,
+								ValidateFunc: nil, // TODO - no docs on this, needs investigation
+							},
+
+							"win_32_status": {
+								Type:         schema.TypeString,
+								Optional:     true,
+								ValidateFunc: nil, // TODO - no docs on this, needs investigation
+							},
+
+							"path": {
+								Type:         schema.TypeString,
+								Optional:     true,
+								ValidateFunc: validate.NoEmptyStrings,
+							},
+						},
+					},
+				},
+
+				"slow_request": {
+					Type:     schema.TypeList,
+					Optional: true,
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"time_taken": {
+								Type:         schema.TypeString,
+								Required:     true,
+								ValidateFunc: validation.IsRFC3339Time,
+							},
+
+							"interval": {
+								Type:         schema.TypeString,
+								Required:     true,
+								ValidateFunc: validation.IsRFC3339Time,
+							},
+
+							"count": {
+								Type:         schema.TypeInt,
+								Required:     true,
+								ValidateFunc: validation.IntAtLeast(1),
+							},
+
+							"path": {
+								Type:         schema.TypeString,
+								Optional:     true,
+								ValidateFunc: validation.StringIsNotEmpty,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func autoHealTriggerSchemaLinux() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		MaxItems: 1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"requests": {
+					Type:     schema.TypeList,
+					Optional: true,
+					MaxItems: 1,
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"count": {
+								Type:         schema.TypeInt,
+								Required:     true,
+								ValidateFunc: validation.IntAtLeast(1),
+							},
+
+							"interval": {
+								Type:         schema.TypeString,
+								Required:     true,
+								ValidateFunc: validation.IsRFC3339Time, // TODO should be hh:mm:ss - This is too loose, need to improve
+							},
+						},
+					},
+				},
+
+				"status_code": {
+					Type:     schema.TypeList,
+					Optional: true,
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"status_code_range": {
+								Type:         schema.TypeString,
+								Required:     true,
+								ValidateFunc: nil, // TODO - status code range validation
+							},
+
+							"count": {
+								Type:         schema.TypeInt,
+								Required:     true,
+								ValidateFunc: validation.IntAtLeast(1),
+							},
+
+							"interval": {
+								Type:         schema.TypeString,
+								Required:     true,
+								ValidateFunc: validation.IsRFC3339Time,
+							},
+
+							"sub_status": {
+								Type:         schema.TypeString,
+								Optional:     true,
+								ValidateFunc: nil, // TODO - no docs on this, needs investigation
+							},
+
+							"win_32_status": {
+								Type:         schema.TypeString,
+								Optional:     true,
+								ValidateFunc: nil, // TODO - no docs on this, needs investigation
+							},
+
+							"path": {
+								Type:         schema.TypeString,
+								Optional:     true,
+								ValidateFunc: validate.NoEmptyStrings,
+							},
+						},
+					},
+				},
+
+				"slow_request": {
+					Type:     schema.TypeList,
+					Optional: true,
+					Elem: &schema.Resource{
+						Schema: map[string]*schema.Schema{
+							"time_taken": {
+								Type:         schema.TypeString,
+								Required:     true,
+								ValidateFunc: validation.IsRFC3339Time,
+							},
+
+							"interval": {
+								Type:         schema.TypeString,
+								Required:     true,
+								ValidateFunc: validation.IsRFC3339Time,
+							},
+
+							"count": {
+								Type:         schema.TypeInt,
+								Required:     true,
+								ValidateFunc: validation.IntAtLeast(1),
+							},
+
+							"path": {
+								Type:         schema.TypeString,
+								Optional:     true,
+								ValidateFunc: validation.StringIsNotEmpty,
+							},
+						},
 					},
 				},
 			},
@@ -1905,4 +2499,61 @@ func flattenVirtualApplications(appVirtualApplications *[]web.VirtualApplication
 	}
 
 	return virtualApplications
+}
+
+func expandAutoHealSettingsWindows(autoHealSettings []AutoHealSettingWindows) *web.AutoHealRules {
+	if len(autoHealSettings) == 0 {
+		return nil
+	}
+
+	result := &web.AutoHealRules{
+		Triggers: &web.AutoHealTriggers{},
+		Actions:  &web.AutoHealActions{},
+	}
+
+	autoHeal := autoHealSettings[0]
+
+	triggers := autoHeal.Triggers[0]
+	if len(triggers.Requests) == 1 {
+		result.Triggers.Requests = &web.RequestsBasedTrigger{
+			Count:        utils.Int32(int32(triggers.Requests[0].Count)),
+			TimeInterval: utils.String(triggers.Requests[0].Interval),
+		}
+	}
+
+	if triggers.PrivateMemoryKB != 0 {
+		result.Triggers.PrivateBytesInKB = utils.Int32(int32(triggers.PrivateMemoryKB))
+	}
+
+	if len(triggers.StatusCodes) > 0 {
+		statusCodeTriggers := make([]web.StatusCodesBasedTrigger, 0)
+		statusCodeRangeTriggers := make([]web.StatusCodesRangeBasedTrigger, 0)
+		for _, s := range triggers.StatusCodes {
+			statusCodeTrigger := web.StatusCodesBasedTrigger{}
+			statusCodeRangeTrigger := web.StatusCodesRangeBasedTrigger{}
+			parts := strings.Split(s.StatusCodeRange, "-")
+			if len(parts) == 2 {
+				statusCodeRangeTrigger.StatusCodes = utils.String(s.StatusCodeRange)
+				statusCodeRangeTrigger.Count = utils.Int32(int32(s.Count))
+				statusCodeRangeTrigger.TimeInterval = utils.String(s.Interval)
+				if s.Path != "" {
+					statusCodeRangeTrigger.Path = utils.String(s.Path)
+				}
+				statusCodeRangeTriggers = append(statusCodeRangeTriggers, statusCodeRangeTrigger)
+			} else {
+				statusCode, err := strconv.Atoi(s.StatusCodeRange)
+				if err == nil {
+					statusCodeTrigger.Status = utils.Int32(int32(statusCode))
+				}
+				statusCodeTrigger.Count = utils.Int32(int32(s.Count))
+				statusCodeTrigger.TimeInterval = utils.String(s.Interval)
+				if s.Path != "" {
+					statusCodeTrigger.Path = utils.String(s.Path)
+				}
+				statusCodeTriggers = append(statusCodeTriggers, statusCodeTrigger)
+			}
+		}
+	}
+
+	return result
 }

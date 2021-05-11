@@ -582,6 +582,21 @@ resource "azurerm_windows_web_app" "test" {
     }
   }
 
+  auto_heal = true
+
+  auto_heal_setting {
+    trigger {
+      status_code = "500"
+      count       = 10
+      interval    = "00:01:00"
+    }
+
+    action {
+      action_type = "Recycle"
+      minimum_process_execution_time = "00:05:00"
+    }
+  }
+
   backup {
     name                = "acctest"
     storage_account_url = "https://${azurerm_storage_account.test.name}.blob.core.windows.net/${azurerm_storage_container.test.name}${data.azurerm_storage_account_sas.test.sas}&sr=b"
@@ -643,7 +658,6 @@ resource "azurerm_windows_web_app" "test" {
       "third.aspx",
       "hostingstart.html",
     ]
-    detailed_error_logging      = true
     http2_enabled               = true
     scm_use_main_ip_restriction = true
     local_mysql                 = true
@@ -787,7 +801,6 @@ resource "azurerm_windows_web_app" "test" {
       "third.aspx",
       "hostingstart.html",
     ]
-    detailed_error_logging      = false
     http2_enabled               = false
     scm_use_main_ip_restriction = false
     local_mysql                 = false

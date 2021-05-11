@@ -132,7 +132,7 @@ func (r LinuxWebAppResource) Arguments() map[string]*schema.Schema {
 
 		"logs": logsConfigSchema(),
 
-		"site_config": siteConfigSchema(osTypeLinux),
+		"site_config": siteConfigSchemaLinux(),
 
 		"storage_account": storageAccountSchema(),
 

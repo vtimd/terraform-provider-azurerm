@@ -2557,3 +2557,58 @@ func expandAutoHealSettingsWindows(autoHealSettings []AutoHealSettingWindows) *w
 
 	return result
 }
+
+func flattenAutoHealSettingsWindows(autoHealRules *web.AutoHealRules) []AutoHealSettingWindows {
+	if autoHealRules == nil {
+		return nil
+	}
+
+	resultTrigger := AutoHealTriggerWindows{}
+	resultActions := AutoHealActionWindows{}
+	// Triggers
+	if autoHealRules.Triggers != nil {
+		triggers := *autoHealRules.Triggers
+		if triggers.Requests != nil {
+			count := 0
+			if triggers.Requests.Count != nil {
+				count = int(*triggers.Requests.Count)
+			}
+			resultTrigger.Requests = []AutoHealRequestTrigger{{
+				Count:    count,
+				Interval: utils.NormalizeNilableString(triggers.Requests.TimeInterval),
+			}}
+		}
+
+		if triggers.PrivateBytesInKB != nil {
+			resultTrigger.PrivateMemoryKB = int(*triggers.PrivateBytesInKB)
+		}
+
+		statusCodeTriggers := make([]AutoHealStatusCodeTrigger, 0)
+		if triggers.StatusCodes != nil {
+			for _, s := range *triggers.StatusCodes {
+				t := AutoHealStatusCodeTrigger{
+					Interval: utils.NormalizeNilableString(s.TimeInterval),
+					Path:     utils.NormalizeNilableString(s.Path),
+				}
+
+				if s.Status != nil {
+					t.StatusCodeRange = strconv.Itoa(int(*s.Status))
+				}
+
+				if s.Count != nil {
+					t.Count = int(*s.Count)
+				}
+
+				if s.SubStatus != nil {
+					t.SubStatus =
+				}
+			}
+		}
+	}
+	// Actions
+
+	return []AutoHealSettingWindows{{
+		Triggers: []AutoHealTriggerWindows{resultTrigger},
+		Actions:  []AutoHealActionWindows{resultActions},
+	}}
+}

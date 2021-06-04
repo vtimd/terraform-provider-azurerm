@@ -436,6 +436,20 @@ func TestAccWindowsWebApp_withMultiStack(t *testing.T) {
 	})
 }
 
+func TestAccWindowsWebApp_withAutoHelRules(t *testing.T) {
+	data := acceptance.BuildTestData(t, "azurerm_windows_web_app", "test")
+	r := WindowsWebAppResource{}
+
+	data.ResourceTest(t, r, []resource.TestStep{
+		{
+			Config: r.autoHealRules(data),
+			Check: resource.ComposeTestCheckFunc(
+				check.That(data.ResourceName).ExistsInAzure(r),
+			),
+		},
+	})
+}
+
 func (r WindowsWebAppResource) Exists(ctx context.Context, client *clients.Client, state *pluginsdk.InstanceState) (*bool, error) {
 	id, err := parse.WebAppID(state.ID)
 	if err != nil {
@@ -582,21 +596,6 @@ resource "azurerm_windows_web_app" "test" {
     }
   }
 
-  auto_heal = true
-
-  auto_heal_setting {
-    trigger {
-      status_code = "500"
-      count       = 10
-      interval    = "00:01:00"
-    }
-
-    action {
-      action_type = "Recycle"
-      minimum_process_execution_time = "00:05:00"
-    }
-  }
-
   backup {
     name                = "acctest"
     storage_account_url = "https://${azurerm_storage_account.test.name}.blob.core.windows.net/${azurerm_storage_container.test.name}${data.azurerm_storage_account_sas.test.sas}&sr=b"
@@ -681,6 +680,20 @@ resource "azurerm_windows_web_app" "test" {
     }
 
     // auto_swap_slot_name = // TODO
+      auto_heal = true
+
+	  auto_heal_setting {
+		trigger {
+		  status_code = "500"
+		  count       = 10
+		  interval    = "00:01:00"
+		}
+	
+		action {
+		  action_type = "Recycle"
+		  minimum_process_execution_time = "00:05:00"
+		}
+	  }
   }
 
   storage_account {
@@ -1086,6 +1099,42 @@ resource "azurerm_windows_web_app" "test" {
 }
 
 `, r.templateWithStorageAccount(data), data.RandomInteger)
+}
+
+func (r WindowsWebAppResource) autoHealRules(data acceptance.TestData) string {
+	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
+%s
+
+resource "azurerm_windows_web_app" "test" {
+  name                = "acctestWA-%d"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
+  service_plan_id     = azurerm_app_service_plan.test.id
+
+  site_config {
+    auto_heal = true
+
+    auto_heal_setting {
+      trigger {
+        status_code {
+          status_code_range = "500"
+          interval          = "00:01:00"
+          count             = 10
+        }
+      }
+
+      action {
+        action_type = "Recycle"
+        minimum_process_execution_time = "00:05:00"
+      }
+    }
+  }
+}
+`, r.baseTemplate(data), data.RandomInteger)
 }
 
 // Templates

@@ -794,7 +794,7 @@ type AutoHealRequestTrigger struct {
 
 type AutoHealStatusCodeTrigger struct {
 	StatusCodeRange string `tfschema:"status_code_range"` // Conflicts with `StatusCode`, `Win32Code`, and `SubStatus` when not a single value...
-	SubStatus       string `tfschema:"sub_status"`
+	SubStatus       int    `tfschema:"sub_status"`
 	Win32Status     string `tfschema:"win_32_status"`
 	Path            string `tfschema:"path"`
 	Count           int    `tfschema:"count"`
@@ -802,7 +802,7 @@ type AutoHealStatusCodeTrigger struct {
 }
 
 type AutoHealSlowRequest struct {
-	TimeTaken int    `tfschema:"time_taken"`
+	TimeTaken string `tfschema:"time_taken"`
 	Interval  string `tfschema:"interval"`
 	Count     int    `tfschema:"count"`
 	Path      string `tfschema:"path"`
@@ -863,7 +863,7 @@ func autoHealSettingSchemaLinux() *schema.Schema {
 func autoHealActionSchemaWindows() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
-		Optional: true,
+		Required: true,
 		MaxItems: 1,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
@@ -938,7 +938,7 @@ func autoHealActionSchemaLinux() *schema.Schema {
 func autoHealTriggerSchemaWindows() *schema.Schema {
 	return &schema.Schema{
 		Type:     schema.TypeList,
-		Optional: true,
+		Required: true,
 		MaxItems: 1,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
@@ -955,9 +955,9 @@ func autoHealTriggerSchemaWindows() *schema.Schema {
 							},
 
 							"interval": {
-								Type:         schema.TypeString,
-								Required:     true,
-								ValidateFunc: validation.IsRFC3339Time, // TODO should be hh:mm:ss - This is too loose, need to improve
+								Type:     schema.TypeString,
+								Required: true,
+								//ValidateFunc: validation.IsRFC3339Time, // TODO should be hh:mm:ss - This is too loose, need to improve
 							},
 						},
 					},
@@ -987,13 +987,13 @@ func autoHealTriggerSchemaWindows() *schema.Schema {
 							},
 
 							"interval": {
-								Type:         schema.TypeString,
-								Required:     true,
-								ValidateFunc: validation.IsRFC3339Time,
+								Type:     schema.TypeString,
+								Required: true,
+								//ValidateFunc: validation.IsRFC3339Time,
 							},
 
 							"sub_status": {
-								Type:         schema.TypeString,
+								Type:         schema.TypeInt,
 								Optional:     true,
 								ValidateFunc: nil, // TODO - no docs on this, needs investigation
 							},
@@ -1019,15 +1019,15 @@ func autoHealTriggerSchemaWindows() *schema.Schema {
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
 							"time_taken": {
-								Type:         schema.TypeString,
-								Required:     true,
-								ValidateFunc: validation.IsRFC3339Time,
+								Type:     schema.TypeString,
+								Required: true,
+								//ValidateFunc: validation.IsRFC3339Time,
 							},
 
 							"interval": {
-								Type:         schema.TypeString,
-								Required:     true,
-								ValidateFunc: validation.IsRFC3339Time,
+								Type:     schema.TypeString,
+								Required: true,
+								//ValidateFunc: validation.IsRFC3339Time,
 							},
 
 							"count": {
@@ -1069,9 +1069,9 @@ func autoHealTriggerSchemaLinux() *schema.Schema {
 							},
 
 							"interval": {
-								Type:         schema.TypeString,
-								Required:     true,
-								ValidateFunc: validation.IsRFC3339Time, // TODO should be hh:mm:ss - This is too loose, need to improve
+								Type:     schema.TypeString,
+								Required: true,
+								//ValidateFunc: validation.IsRFC3339Time, // TODO should be hh:mm:ss - This is too loose, need to improve?
 							},
 						},
 					},
@@ -1095,13 +1095,13 @@ func autoHealTriggerSchemaLinux() *schema.Schema {
 							},
 
 							"interval": {
-								Type:         schema.TypeString,
-								Required:     true,
-								ValidateFunc: validation.IsRFC3339Time,
+								Type:     schema.TypeString,
+								Required: true,
+								//ValidateFunc: validation.IsRFC3339Time,
 							},
 
 							"sub_status": {
-								Type:         schema.TypeString,
+								Type:         schema.TypeInt,
 								Optional:     true,
 								ValidateFunc: nil, // TODO - no docs on this, needs investigation
 							},
@@ -1127,15 +1127,15 @@ func autoHealTriggerSchemaLinux() *schema.Schema {
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
 							"time_taken": {
-								Type:         schema.TypeString,
-								Required:     true,
-								ValidateFunc: validation.IsRFC3339Time,
+								Type:     schema.TypeString,
+								Required: true,
+								//ValidateFunc: validation.IsRFC3339Time,
 							},
 
 							"interval": {
-								Type:         schema.TypeString,
-								Required:     true,
-								ValidateFunc: validation.IsRFC3339Time,
+								Type:     schema.TypeString,
+								Required: true,
+								//ValidateFunc: validation.IsRFC3339Time,
 							},
 
 							"count": {
@@ -1359,11 +1359,11 @@ func backupSchema() *schema.Schema {
 							},
 
 							"start_time": {
-								Type:             schema.TypeString,
-								Optional:         true,
-								Computed:         true,
-								DiffSuppressFunc: suppress.RFC3339Time,
-								ValidateFunc:     validation.IsRFC3339Time,
+								Type:     schema.TypeString,
+								Optional: true,
+								Computed: true,
+								//DiffSuppressFunc: suppress.RFC3339Time,
+								//ValidateFunc:     validation.IsRFC3339Time,
 							},
 
 							"last_execution_time": {
@@ -1742,6 +1742,11 @@ func expandSiteConfigWindows(siteConfig []SiteConfigWindows) (*web.SiteConfig, *
 
 	if len(winSiteConfig.Cors) != 0 {
 		expanded.Cors = helpers.ExpandCorsSettings(winSiteConfig.Cors)
+	}
+
+	expanded.AutoHealEnabled = utils.Bool(winSiteConfig.AutoHeal)
+	if len(winSiteConfig.AutoHealSettings) != 0 {
+		expanded.AutoHealRules = expandAutoHealSettingsWindows(winSiteConfig.AutoHealSettings)
 	}
 
 	return expanded, &currentStack, nil
@@ -2287,6 +2292,9 @@ func flattenSiteConfigWindows(appSiteConfig *web.SiteConfig) []SiteConfigWindows
 		siteConfig.Cors = []helpers.CorsSetting{cors}
 	}
 
+	siteConfig.AutoHeal = *appSiteConfig.AutoHealEnabled
+	siteConfig.AutoHealSettings = flattenAutoHealSettingsWindows(appSiteConfig.AutoHealRules)
+
 	return []SiteConfigWindows{siteConfig}
 }
 
@@ -2553,6 +2561,19 @@ func expandAutoHealSettingsWindows(autoHealSettings []AutoHealSettingWindows) *w
 				statusCodeTriggers = append(statusCodeTriggers, statusCodeTrigger)
 			}
 		}
+		result.Triggers.StatusCodes = &statusCodeTriggers
+		result.Triggers.StatusCodesRange = &statusCodeRangeTriggers
+	}
+
+	action := autoHeal.Actions[0]
+	result.Actions.ActionType = web.AutoHealActionType(action.ActionType)
+	result.Actions.MinProcessExecutionTime = utils.String(action.MinimumProcessTime)
+	if len(action.CustomAction) != 0 {
+		customAction := action.CustomAction[0]
+		result.Actions.CustomAction = &web.AutoHealCustomAction{
+			Exe:        utils.String(customAction.Executable),
+			Parameters: utils.String(customAction.Parameters),
+		}
 	}
 
 	return result
@@ -2600,12 +2621,42 @@ func flattenAutoHealSettingsWindows(autoHealRules *web.AutoHealRules) []AutoHeal
 				}
 
 				if s.SubStatus != nil {
-					t.SubStatus =
+					t.SubStatus = int(*s.SubStatus)
 				}
+				statusCodeTriggers = append(statusCodeTriggers, t)
 			}
 		}
+		resultTrigger.StatusCodes = statusCodeTriggers
+
+		slowRequestTriggers := make([]AutoHealSlowRequest, 0)
+		if triggers.SlowRequests != nil {
+			slowRequestTriggers = append(slowRequestTriggers, AutoHealSlowRequest{
+				TimeTaken: utils.NormalizeNilableString(triggers.SlowRequests.TimeTaken),
+				Interval:  utils.NormalizeNilableString(triggers.SlowRequests.TimeInterval),
+				Count:     int(utils.NormaliseNilableInt32(triggers.SlowRequests.Count)),
+				Path:      utils.NormalizeNilableString(triggers.SlowRequests.Path),
+			})
+		}
+		resultTrigger.SlowRequests = slowRequestTriggers
 	}
+
 	// Actions
+	if autoHealRules.Actions != nil {
+		actions := *autoHealRules.Actions
+		customActions := make([]AutoHealCustomAction, 0)
+		if actions.CustomAction != nil {
+			customActions = append(customActions, AutoHealCustomAction{
+				Executable: utils.NormalizeNilableString(actions.CustomAction.Exe),
+				Parameters: utils.NormalizeNilableString(actions.CustomAction.Parameters),
+			})
+		}
+
+		resultActions = AutoHealActionWindows{
+			ActionType:         string(actions.ActionType),
+			CustomAction:       customActions,
+			MinimumProcessTime: utils.NormalizeNilableString(actions.MinProcessExecutionTime),
+		}
+	}
 
 	return []AutoHealSettingWindows{{
 		Triggers: []AutoHealTriggerWindows{resultTrigger},

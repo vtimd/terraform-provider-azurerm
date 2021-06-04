@@ -8,10 +8,10 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/services/web/mgmt/2020-12-01/web"
 	"github.com/Azure/go-autorest/autorest/date"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/terraform-providers/terraform-provider-azuread/azuread/helpers/validate"
 	apimValidate "github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/apimanagement/validate"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/appservice/helpers"
+	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/pluginsdk"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/suppress"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
@@ -91,22 +91,22 @@ type SiteConfigLinux struct {
 	// AutoHealRules []AutoHealRule
 }
 
-func siteConfigSchemaWindows() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func siteConfigSchemaWindows() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Optional: true,
 		Computed: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"always_on": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					Computed: true,
 				},
 
 				"api_management_config_id": {
-					Type:         schema.TypeString,
+					Type:         pluginsdk.TypeString,
 					Optional:     true,
 					ValidateFunc: apimValidate.ApiManagementID,
 				},
@@ -114,12 +114,12 @@ func siteConfigSchemaWindows() *schema.Schema {
 				"application_stack": windowsApplicationStackSchema(),
 
 				"app_command_line": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 				},
 
 				"auto_heal": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					RequiredWith: []string{
 						"site_config.0.auto_heal_setting",
@@ -129,16 +129,16 @@ func siteConfigSchemaWindows() *schema.Schema {
 				"auto_heal_setting": autoHealSettingSchemaWindows(),
 
 				"default_documents": {
-					Type:     schema.TypeList,
+					Type:     pluginsdk.TypeList,
 					Optional: true,
 					Computed: true,
-					Elem: &schema.Schema{
-						Type: schema.TypeString,
+					Elem: &pluginsdk.Schema{
+						Type: pluginsdk.TypeString,
 					},
 				},
 
 				"http2_enabled": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					Default:  false,
 				},
@@ -146,7 +146,7 @@ func siteConfigSchemaWindows() *schema.Schema {
 				"ip_restriction": helpers.IpRestrictionSchema(),
 
 				"scm_use_main_ip_restriction": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					Default:  false,
 				},
@@ -154,13 +154,13 @@ func siteConfigSchemaWindows() *schema.Schema {
 				"scm_ip_restriction": helpers.IpRestrictionSchema(),
 
 				"local_mysql": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					Computed: true,
 				},
 
 				"load_balancing_mode": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					Computed: true,
 					ValidateFunc: validation.StringInSlice([]string{
@@ -174,7 +174,7 @@ func siteConfigSchemaWindows() *schema.Schema {
 				},
 
 				"managed_pipeline_mode": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					Computed: true,
 					ValidateFunc: validation.StringInSlice([]string{
@@ -184,13 +184,13 @@ func siteConfigSchemaWindows() *schema.Schema {
 				},
 
 				"remote_debugging": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					Default:  false,
 				},
 
 				"remote_debugging_version": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					Computed: true,
 					ValidateFunc: validation.StringInSlice([]string{
@@ -201,24 +201,24 @@ func siteConfigSchemaWindows() *schema.Schema {
 				},
 
 				"scm_type": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Computed: true,
 				},
 
 				"use_32_bit_worker": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					Default:  false,
 				},
 
 				"websockets": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					Default:  false,
 				},
 
 				"ftps_state": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					Computed: true,
 					ValidateFunc: validation.StringInSlice([]string{
@@ -229,19 +229,19 @@ func siteConfigSchemaWindows() *schema.Schema {
 				},
 
 				"health_check_path": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 				},
 
 				"number_of_workers": {
-					Type:         schema.TypeInt,
+					Type:         pluginsdk.TypeInt,
 					Optional:     true,
 					Computed:     true,
 					ValidateFunc: validation.IntBetween(1, 100),
 				},
 
 				"minimum_tls_version": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					Computed: true,
 					ValidateFunc: validation.StringInSlice([]string{
@@ -252,7 +252,7 @@ func siteConfigSchemaWindows() *schema.Schema {
 				},
 
 				"scm_minimum_tls_version": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					Computed: true,
 					ValidateFunc: validation.StringInSlice([]string{
@@ -267,23 +267,23 @@ func siteConfigSchemaWindows() *schema.Schema {
 				"virtual_application": virtualApplicationsSchema(),
 
 				"auto_swap_slot_name": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					// TODO - Add slot name validation here?
 				},
 
 				"detailed_error_logging": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Computed: true,
 				},
 
 				"linux_fx_version": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Computed: true,
 				},
 
 				"windows_fx_version": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Computed: true,
 				},
 			},
@@ -291,35 +291,35 @@ func siteConfigSchemaWindows() *schema.Schema {
 	}
 }
 
-func siteConfigSchemaLinux() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func siteConfigSchemaLinux() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Optional: true,
 		Computed: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"always_on": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					Computed: true,
 				},
 
 				"api_management_config_id": {
-					Type:         schema.TypeString,
+					Type:         pluginsdk.TypeString,
 					Optional:     true,
 					ValidateFunc: apimValidate.ApiManagementID,
 				},
 
 				"app_command_line": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 				},
 
 				"application_stack": linuxApplicationStackSchema(),
 
 				"auto_heal": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					RequiredWith: []string{
 						"site_config.0.auto_heal_setting",
@@ -329,16 +329,16 @@ func siteConfigSchemaLinux() *schema.Schema {
 				"auto_heal_setting": autoHealSettingSchemaLinux(),
 
 				"default_documents": {
-					Type:     schema.TypeList,
+					Type:     pluginsdk.TypeList,
 					Optional: true,
 					Computed: true,
-					Elem: &schema.Schema{
-						Type: schema.TypeString,
+					Elem: &pluginsdk.Schema{
+						Type: pluginsdk.TypeString,
 					},
 				},
 
 				"http2_enabled": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					Default:  false,
 				},
@@ -346,7 +346,7 @@ func siteConfigSchemaLinux() *schema.Schema {
 				"ip_restriction": helpers.IpRestrictionSchema(),
 
 				"scm_use_main_ip_restriction": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					Default:  false,
 				},
@@ -354,13 +354,13 @@ func siteConfigSchemaLinux() *schema.Schema {
 				"scm_ip_restriction": helpers.IpRestrictionSchema(),
 
 				"local_mysql": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					Computed: true,
 				},
 
 				"load_balancing_mode": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					Computed: true,
 					ValidateFunc: validation.StringInSlice([]string{
@@ -374,7 +374,7 @@ func siteConfigSchemaLinux() *schema.Schema {
 				},
 
 				"managed_pipeline_mode": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					Computed: true,
 					ValidateFunc: validation.StringInSlice([]string{
@@ -384,13 +384,13 @@ func siteConfigSchemaLinux() *schema.Schema {
 				},
 
 				"remote_debugging": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					Default:  false,
 				},
 
 				"remote_debugging_version": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					Computed: true,
 					ValidateFunc: validation.StringInSlice([]string{
@@ -401,24 +401,24 @@ func siteConfigSchemaLinux() *schema.Schema {
 				},
 
 				"scm_type": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Computed: true,
 				},
 
 				"use_32_bit_worker": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					Default:  false,
 				},
 
 				"websockets": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					Default:  false,
 				},
 
 				"ftps_state": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					Computed: true,
 					ValidateFunc: validation.StringInSlice([]string{
@@ -429,19 +429,19 @@ func siteConfigSchemaLinux() *schema.Schema {
 				},
 
 				"health_check_path": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 				},
 
 				"number_of_workers": {
-					Type:         schema.TypeInt,
+					Type:         pluginsdk.TypeInt,
 					Optional:     true,
 					Computed:     true,
 					ValidateFunc: validation.IntBetween(1, 100),
 				},
 
 				"minimum_tls_version": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					Computed: true,
 					ValidateFunc: validation.StringInSlice([]string{
@@ -452,7 +452,7 @@ func siteConfigSchemaLinux() *schema.Schema {
 				},
 
 				"scm_minimum_tls_version": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					Computed: true,
 					ValidateFunc: validation.StringInSlice([]string{
@@ -465,23 +465,23 @@ func siteConfigSchemaLinux() *schema.Schema {
 				"cors": helpers.CorsSettingsSchema(),
 
 				"auto_swap_slot_name": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					// TODO - Add slot name validation here?
 				},
 
 				"detailed_error_logging": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Computed: true,
 				},
 
 				"linux_fx_version": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Computed: true,
 				},
 
 				"windows_fx_version": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Computed: true,
 				},
 			},
@@ -504,16 +504,16 @@ type ApplicationStackWindows struct {
 }
 
 // Version information for the below validations was taken in part from - https://github.com/Azure/app-service-linux-docs/tree/master/Runtime_Support
-func windowsApplicationStackSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func windowsApplicationStackSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Optional: true,
 		Computed: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"dotnet_framework_version": { // Windows Only
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					Computed: true,
 					ValidateFunc: validation.StringInSlice([]string{
@@ -525,7 +525,7 @@ func windowsApplicationStackSchema() *schema.Schema {
 				},
 
 				"php_version": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					Computed: true,
 					ValidateFunc: validation.StringInSlice([]string{
@@ -536,7 +536,7 @@ func windowsApplicationStackSchema() *schema.Schema {
 				},
 
 				"python_version": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					ValidateFunc: validation.StringInSlice([]string{
 						"2.7",
@@ -545,7 +545,7 @@ func windowsApplicationStackSchema() *schema.Schema {
 				},
 
 				"node_version": { // Discarded by service if JavaVersion is specified
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					ValidateFunc: validation.StringInSlice([]string{
 						"10.1",   // Linux Only?
@@ -562,7 +562,7 @@ func windowsApplicationStackSchema() *schema.Schema {
 				},
 
 				"java_version": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					Computed: true,
 					ValidateFunc: validation.StringInSlice([]string{
@@ -572,7 +572,7 @@ func windowsApplicationStackSchema() *schema.Schema {
 					}, false),
 				},
 
-				"java_container": {Type: schema.TypeString,
+				"java_container": {Type: pluginsdk.TypeString,
 					Optional: true,
 					Computed: true,
 					ValidateFunc: validation.StringInSlice([]string{
@@ -586,7 +586,7 @@ func windowsApplicationStackSchema() *schema.Schema {
 				},
 
 				"java_container_version": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					Computed: true,
 					RequiredWith: []string{
@@ -595,7 +595,7 @@ func windowsApplicationStackSchema() *schema.Schema {
 				},
 
 				"docker_container_name": {
-					Type:         schema.TypeString,
+					Type:         pluginsdk.TypeString,
 					Optional:     true,
 					ValidateFunc: validation.StringIsNotEmpty,
 					RequiredWith: []string{
@@ -605,7 +605,7 @@ func windowsApplicationStackSchema() *schema.Schema {
 				},
 
 				"docker_container_registry": {
-					Type:         schema.TypeString,
+					Type:         pluginsdk.TypeString,
 					Optional:     true,
 					ValidateFunc: validation.StringIsNotEmpty,
 					RequiredWith: []string{
@@ -615,7 +615,7 @@ func windowsApplicationStackSchema() *schema.Schema {
 				},
 
 				"docker_container_tag": {
-					Type:         schema.TypeString,
+					Type:         pluginsdk.TypeString,
 					Optional:     true,
 					ValidateFunc: validation.StringIsNotEmpty,
 					RequiredWith: []string{
@@ -625,7 +625,7 @@ func windowsApplicationStackSchema() *schema.Schema {
 				},
 
 				"current_stack": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					ValidateFunc: validation.StringInSlice([]string{
 						"dotnet",
@@ -654,16 +654,16 @@ type ApplicationStackLinux struct {
 }
 
 // version information in the validation here was taken mostly from - `az webapp list-runtimes --linux`
-func linuxApplicationStackSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func linuxApplicationStackSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Optional: true,
 		Computed: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"dotnet_framework_version": { // Windows Only
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					Computed: true,
 					ValidateFunc: validation.StringInSlice([]string{
@@ -674,7 +674,7 @@ func linuxApplicationStackSchema() *schema.Schema {
 				},
 
 				"php_version": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					Computed: true,
 					ValidateFunc: validation.StringInSlice([]string{
@@ -686,7 +686,7 @@ func linuxApplicationStackSchema() *schema.Schema {
 				},
 
 				"python_version": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					ValidateFunc: validation.StringInSlice([]string{
 						"2.7", // TODO - Remove? 2.7 is available, but deprecated in the service
@@ -697,7 +697,7 @@ func linuxApplicationStackSchema() *schema.Schema {
 				},
 
 				"node_version": { // Discarded by service if JavaVersion is specified
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					ValidateFunc: validation.StringInSlice([]string{
 						"10.1",   // TODO - Remove?  Deprecated
@@ -713,7 +713,7 @@ func linuxApplicationStackSchema() *schema.Schema {
 				},
 
 				"ruby_version": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					ValidateFunc: validation.StringInSlice([]string{
 						"2.5",
@@ -722,13 +722,13 @@ func linuxApplicationStackSchema() *schema.Schema {
 				},
 
 				"java_version": {
-					Type:         schema.TypeString,
+					Type:         pluginsdk.TypeString,
 					Optional:     true,
 					ValidateFunc: validate.NoEmptyStrings, // There a significant number of variables here, and the versions are not uniformly formatted.
 					// TODO - Needs notes in the docs for this to help users navigate the inconsistencies in the service. e.g. jre8 va java8 etc
 				},
 
-				"java_server": {Type: schema.TypeString,
+				"java_server": {Type: pluginsdk.TypeString,
 					Optional: true,
 					ValidateFunc: validation.StringInSlice([]string{
 						"JAVA",
@@ -738,12 +738,12 @@ func linuxApplicationStackSchema() *schema.Schema {
 				},
 
 				"java_server_version": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 				},
 
 				"docker_image": {
-					Type:         schema.TypeString,
+					Type:         pluginsdk.TypeString,
 					Optional:     true,
 					ValidateFunc: validation.StringIsNotEmpty,
 					RequiredWith: []string{
@@ -752,7 +752,7 @@ func linuxApplicationStackSchema() *schema.Schema {
 				},
 
 				"docker_image_tag": {
-					Type:         schema.TypeString,
+					Type:         pluginsdk.TypeString,
 					Optional:     true,
 					ValidateFunc: validation.StringIsNotEmpty,
 					RequiredWith: []string{
@@ -824,13 +824,13 @@ type AutoHealCustomAction struct {
 	Parameters string `tfschema:"parameters"`
 }
 
-func autoHealSettingSchemaWindows() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func autoHealSettingSchemaWindows() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Optional: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"trigger": autoHealTriggerSchemaWindows(),
 
 				"action": autoHealActionSchemaWindows(),
@@ -842,13 +842,13 @@ func autoHealSettingSchemaWindows() *schema.Schema {
 	}
 }
 
-func autoHealSettingSchemaLinux() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func autoHealSettingSchemaLinux() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Optional: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"trigger": autoHealTriggerSchemaLinux(),
 
 				"action": autoHealActionSchemaLinux(),
@@ -860,15 +860,15 @@ func autoHealSettingSchemaLinux() *schema.Schema {
 	}
 }
 
-func autoHealActionSchemaWindows() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func autoHealActionSchemaWindows() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Required: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"action_type": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Required: true,
 					ValidateFunc: validation.StringInSlice([]string{
 						string(web.CustomAction),
@@ -878,19 +878,19 @@ func autoHealActionSchemaWindows() *schema.Schema {
 				},
 
 				"custom_action": {
-					Type:     schema.TypeList,
+					Type:     pluginsdk.TypeList,
 					Optional: true,
 					MaxItems: 1,
-					Elem: &schema.Resource{
-						Schema: map[string]*schema.Schema{
+					Elem: &pluginsdk.Resource{
+						Schema: map[string]*pluginsdk.Schema{
 							"executable": {
-								Type:         schema.TypeString,
+								Type:         pluginsdk.TypeString,
 								Required:     true,
 								ValidateFunc: validation.StringIsNotEmpty,
 							},
 
 							"parameters": {
-								Type:         schema.TypeString,
+								Type:         pluginsdk.TypeString,
 								Optional:     true,
 								ValidateFunc: validation.StringIsNotEmpty,
 							},
@@ -899,7 +899,7 @@ func autoHealActionSchemaWindows() *schema.Schema {
 				},
 
 				"minimum_process_execution_time": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					Computed: true,
 					//ValidateFunc: // TODO - Time in hh:mm:ss, because why not...
@@ -909,15 +909,15 @@ func autoHealActionSchemaWindows() *schema.Schema {
 	}
 }
 
-func autoHealActionSchemaLinux() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func autoHealActionSchemaLinux() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Optional: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"action_type": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Required: true,
 					ValidateFunc: validation.StringInSlice([]string{
 						string(web.Recycle),
@@ -925,7 +925,7 @@ func autoHealActionSchemaLinux() *schema.Schema {
 				},
 
 				"minimum_process_execution_time": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					Computed: true,
 					//ValidateFunc: // TODO - Time in hh:mm:ss, because why not...
@@ -935,27 +935,27 @@ func autoHealActionSchemaLinux() *schema.Schema {
 	}
 }
 
-func autoHealTriggerSchemaWindows() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func autoHealTriggerSchemaWindows() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Required: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"requests": {
-					Type:     schema.TypeList,
+					Type:     pluginsdk.TypeList,
 					Optional: true,
 					MaxItems: 1,
-					Elem: &schema.Resource{
-						Schema: map[string]*schema.Schema{
+					Elem: &pluginsdk.Resource{
+						Schema: map[string]*pluginsdk.Schema{
 							"count": {
-								Type:         schema.TypeInt,
+								Type:         pluginsdk.TypeInt,
 								Required:     true,
 								ValidateFunc: validation.IntAtLeast(1),
 							},
 
 							"interval": {
-								Type:     schema.TypeString,
+								Type:     pluginsdk.TypeString,
 								Required: true,
 								//ValidateFunc: validation.IsRFC3339Time, // TODO should be hh:mm:ss - This is too loose, need to improve
 							},
@@ -964,48 +964,48 @@ func autoHealTriggerSchemaWindows() *schema.Schema {
 				},
 
 				"private_memory_kb": {
-					Type:         schema.TypeInt,
+					Type:         pluginsdk.TypeInt,
 					Optional:     true,
 					ValidateFunc: validation.IntBetween(102400, 13631488),
 				},
 
 				"status_code": {
-					Type:     schema.TypeList,
+					Type:     pluginsdk.TypeList,
 					Optional: true,
-					Elem: &schema.Resource{
-						Schema: map[string]*schema.Schema{
+					Elem: &pluginsdk.Resource{
+						Schema: map[string]*pluginsdk.Schema{
 							"status_code_range": {
-								Type:         schema.TypeString,
+								Type:         pluginsdk.TypeString,
 								Required:     true,
 								ValidateFunc: nil, // TODO - status code range validation
 							},
 
 							"count": {
-								Type:         schema.TypeInt,
+								Type:         pluginsdk.TypeInt,
 								Required:     true,
 								ValidateFunc: validation.IntAtLeast(1),
 							},
 
 							"interval": {
-								Type:     schema.TypeString,
+								Type:     pluginsdk.TypeString,
 								Required: true,
 								//ValidateFunc: validation.IsRFC3339Time,
 							},
 
 							"sub_status": {
-								Type:         schema.TypeInt,
+								Type:         pluginsdk.TypeInt,
 								Optional:     true,
 								ValidateFunc: nil, // TODO - no docs on this, needs investigation
 							},
 
 							"win_32_status": {
-								Type:         schema.TypeString,
+								Type:         pluginsdk.TypeString,
 								Optional:     true,
 								ValidateFunc: nil, // TODO - no docs on this, needs investigation
 							},
 
 							"path": {
-								Type:         schema.TypeString,
+								Type:         pluginsdk.TypeString,
 								Optional:     true,
 								ValidateFunc: validate.NoEmptyStrings,
 							},
@@ -1014,30 +1014,30 @@ func autoHealTriggerSchemaWindows() *schema.Schema {
 				},
 
 				"slow_request": {
-					Type:     schema.TypeList,
+					Type:     pluginsdk.TypeList,
 					Optional: true,
-					Elem: &schema.Resource{
-						Schema: map[string]*schema.Schema{
+					Elem: &pluginsdk.Resource{
+						Schema: map[string]*pluginsdk.Schema{
 							"time_taken": {
-								Type:     schema.TypeString,
+								Type:     pluginsdk.TypeString,
 								Required: true,
 								//ValidateFunc: validation.IsRFC3339Time,
 							},
 
 							"interval": {
-								Type:     schema.TypeString,
+								Type:     pluginsdk.TypeString,
 								Required: true,
 								//ValidateFunc: validation.IsRFC3339Time,
 							},
 
 							"count": {
-								Type:         schema.TypeInt,
+								Type:         pluginsdk.TypeInt,
 								Required:     true,
 								ValidateFunc: validation.IntAtLeast(1),
 							},
 
 							"path": {
-								Type:         schema.TypeString,
+								Type:         pluginsdk.TypeString,
 								Optional:     true,
 								ValidateFunc: validation.StringIsNotEmpty,
 							},
@@ -1049,27 +1049,27 @@ func autoHealTriggerSchemaWindows() *schema.Schema {
 	}
 }
 
-func autoHealTriggerSchemaLinux() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func autoHealTriggerSchemaLinux() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Optional: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"requests": {
-					Type:     schema.TypeList,
+					Type:     pluginsdk.TypeList,
 					Optional: true,
 					MaxItems: 1,
-					Elem: &schema.Resource{
-						Schema: map[string]*schema.Schema{
+					Elem: &pluginsdk.Resource{
+						Schema: map[string]*pluginsdk.Schema{
 							"count": {
-								Type:         schema.TypeInt,
+								Type:         pluginsdk.TypeInt,
 								Required:     true,
 								ValidateFunc: validation.IntAtLeast(1),
 							},
 
 							"interval": {
-								Type:     schema.TypeString,
+								Type:     pluginsdk.TypeString,
 								Required: true,
 								//ValidateFunc: validation.IsRFC3339Time, // TODO should be hh:mm:ss - This is too loose, need to improve?
 							},
@@ -1078,42 +1078,42 @@ func autoHealTriggerSchemaLinux() *schema.Schema {
 				},
 
 				"status_code": {
-					Type:     schema.TypeList,
+					Type:     pluginsdk.TypeList,
 					Optional: true,
-					Elem: &schema.Resource{
-						Schema: map[string]*schema.Schema{
+					Elem: &pluginsdk.Resource{
+						Schema: map[string]*pluginsdk.Schema{
 							"status_code_range": {
-								Type:         schema.TypeString,
+								Type:         pluginsdk.TypeString,
 								Required:     true,
 								ValidateFunc: nil, // TODO - status code range validation
 							},
 
 							"count": {
-								Type:         schema.TypeInt,
+								Type:         pluginsdk.TypeInt,
 								Required:     true,
 								ValidateFunc: validation.IntAtLeast(1),
 							},
 
 							"interval": {
-								Type:     schema.TypeString,
+								Type:     pluginsdk.TypeString,
 								Required: true,
 								//ValidateFunc: validation.IsRFC3339Time,
 							},
 
 							"sub_status": {
-								Type:         schema.TypeInt,
+								Type:         pluginsdk.TypeInt,
 								Optional:     true,
 								ValidateFunc: nil, // TODO - no docs on this, needs investigation
 							},
 
 							"win_32_status": {
-								Type:         schema.TypeString,
+								Type:         pluginsdk.TypeString,
 								Optional:     true,
 								ValidateFunc: nil, // TODO - no docs on this, needs investigation
 							},
 
 							"path": {
-								Type:         schema.TypeString,
+								Type:         pluginsdk.TypeString,
 								Optional:     true,
 								ValidateFunc: validate.NoEmptyStrings,
 							},
@@ -1122,30 +1122,30 @@ func autoHealTriggerSchemaLinux() *schema.Schema {
 				},
 
 				"slow_request": {
-					Type:     schema.TypeList,
+					Type:     pluginsdk.TypeList,
 					Optional: true,
-					Elem: &schema.Resource{
-						Schema: map[string]*schema.Schema{
+					Elem: &pluginsdk.Resource{
+						Schema: map[string]*pluginsdk.Schema{
 							"time_taken": {
-								Type:     schema.TypeString,
+								Type:     pluginsdk.TypeString,
 								Required: true,
 								//ValidateFunc: validation.IsRFC3339Time,
 							},
 
 							"interval": {
-								Type:     schema.TypeString,
+								Type:     pluginsdk.TypeString,
 								Required: true,
 								//ValidateFunc: validation.IsRFC3339Time,
 							},
 
 							"count": {
-								Type:         schema.TypeInt,
+								Type:         pluginsdk.TypeInt,
 								Required:     true,
 								ValidateFunc: validation.IntAtLeast(1),
 							},
 
 							"path": {
-								Type:         schema.TypeString,
+								Type:         pluginsdk.TypeString,
 								Optional:     true,
 								ValidateFunc: validation.StringIsNotEmpty,
 							},
@@ -1169,48 +1169,48 @@ type VirtualDirectory struct {
 	PhysicalPath string `tfschema:"physical_path"`
 }
 
-func virtualApplicationsSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeSet,
+func virtualApplicationsSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeSet,
 		Optional: true,
 		Computed: true,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"virtual_path": {
-					Type:         schema.TypeString,
+					Type:         pluginsdk.TypeString,
 					Optional:     true,
 					Computed:     true,
 					ValidateFunc: validate.NoEmptyStrings,
 				},
 
 				"physical_path": {
-					Type:         schema.TypeString,
+					Type:         pluginsdk.TypeString,
 					Optional:     true,
 					Computed:     true,
 					ValidateFunc: validate.NoEmptyStrings,
 				},
 
 				"preload": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					Computed: true,
 				},
 
 				"virtual_directory": {
-					Type:     schema.TypeSet,
+					Type:     pluginsdk.TypeSet,
 					Computed: true,
 					Optional: true,
-					Elem: &schema.Resource{
-						Schema: map[string]*schema.Schema{
+					Elem: &pluginsdk.Resource{
+						Schema: map[string]*pluginsdk.Schema{
 							"virtual_path": {
-								Type:         schema.TypeString,
+								Type:         pluginsdk.TypeString,
 								Optional:     true,
 								Computed:     true,
 								ValidateFunc: validate.NoEmptyStrings,
 							},
 
 							"physical_path": {
-								Type:         schema.TypeString,
+								Type:         pluginsdk.TypeString,
 								Optional:     true,
 								Computed:     true,
 								ValidateFunc: validate.NoEmptyStrings,
@@ -1232,21 +1232,21 @@ type StorageAccount struct {
 	MountPath   string `tfschema:"mount_path"`
 }
 
-func storageAccountSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeSet,
+func storageAccountSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeSet,
 		Optional: true,
 		Computed: true,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"name": {
-					Type:         schema.TypeString,
+					Type:         pluginsdk.TypeString,
 					Required:     true,
 					ValidateFunc: validation.StringIsNotEmpty,
 				},
 
 				"type": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Required: true,
 					ValidateFunc: validation.StringInSlice([]string{
 						string(web.AzureBlob),
@@ -1255,26 +1255,26 @@ func storageAccountSchema() *schema.Schema {
 				},
 
 				"account_name": {
-					Type:         schema.TypeString,
+					Type:         pluginsdk.TypeString,
 					Required:     true,
 					ValidateFunc: validation.StringIsNotEmpty,
 				},
 
 				"share_name": {
-					Type:         schema.TypeString,
+					Type:         pluginsdk.TypeString,
 					Required:     true,
 					ValidateFunc: validation.StringIsNotEmpty,
 				},
 
 				"access_key": {
-					Type:         schema.TypeString,
+					Type:         pluginsdk.TypeString,
 					Required:     true,
 					Sensitive:    true,
 					ValidateFunc: validation.StringIsNotEmpty,
 				},
 
 				"mount_path": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 				},
 			},
@@ -1298,46 +1298,46 @@ type BackupSchedule struct {
 	LastExecutionTime    string `tfschema:"last_execution_time"`
 }
 
-func backupSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func backupSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Optional: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"name": {
-					Type:         schema.TypeString,
+					Type:         pluginsdk.TypeString,
 					Required:     true,
 					ValidateFunc: validation.StringIsNotEmpty,
 				},
 
 				"storage_account_url": {
-					Type:         schema.TypeString,
+					Type:         pluginsdk.TypeString,
 					Required:     true,
 					Sensitive:    true,
 					ValidateFunc: validation.IsURLWithHTTPS,
 				},
 
 				"enabled": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					Default:  true,
 				},
 
 				"schedule": {
-					Type:     schema.TypeList,
+					Type:     pluginsdk.TypeList,
 					Required: true,
 					MaxItems: 1,
-					Elem: &schema.Resource{
-						Schema: map[string]*schema.Schema{
+					Elem: &pluginsdk.Resource{
+						Schema: map[string]*pluginsdk.Schema{
 							"frequency_interval": {
-								Type:         schema.TypeInt,
+								Type:         pluginsdk.TypeInt,
 								Required:     true,
 								ValidateFunc: validation.IntBetween(0, 1000),
 							},
 
 							"frequency_unit": {
-								Type:     schema.TypeString,
+								Type:     pluginsdk.TypeString,
 								Required: true,
 								ValidateFunc: validation.StringInSlice([]string{
 									"Day",
@@ -1346,20 +1346,20 @@ func backupSchema() *schema.Schema {
 							},
 
 							"keep_at_least_one_backup": {
-								Type:     schema.TypeBool,
+								Type:     pluginsdk.TypeBool,
 								Optional: true,
 								Default:  false,
 							},
 
 							"retention_period_days": {
-								Type:         schema.TypeInt,
+								Type:         pluginsdk.TypeInt,
 								Optional:     true,
 								Default:      30,
 								ValidateFunc: validation.IntBetween(0, 9999999),
 							},
 
 							"start_time": {
-								Type:     schema.TypeString,
+								Type:     pluginsdk.TypeString,
 								Optional: true,
 								Computed: true,
 								//DiffSuppressFunc: suppress.RFC3339Time,
@@ -1367,7 +1367,7 @@ func backupSchema() *schema.Schema {
 							},
 
 							"last_execution_time": {
-								Type:     schema.TypeString,
+								Type:     pluginsdk.TypeString,
 								Computed: true,
 							},
 						},
@@ -1384,20 +1384,20 @@ type ConnectionString struct {
 	Value string `tfschema:"value"`
 }
 
-func connectionStringSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeSet,
+func connectionStringSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeSet,
 		Optional: true,
 		Computed: true,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"name": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Required: true,
 				},
 
 				"type": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Required: true,
 					ValidateFunc: validation.StringInSlice([]string{
 						string(web.APIHub),
@@ -1416,7 +1416,7 @@ func connectionStringSchema() *schema.Schema {
 				},
 
 				"value": {
-					Type:      schema.TypeString,
+					Type:      pluginsdk.TypeString,
 					Required:  true,
 					Sensitive: true,
 				},
@@ -1458,26 +1458,26 @@ type FileSystem struct {
 	RetentionDays int `tfschema:"retention_in_days"`
 }
 
-func logsConfigSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func logsConfigSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Optional: true,
 		Computed: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"application_logs": applicationLogSchema(),
 
 				"http_logs": httpLogSchema(),
 
 				"failed_request_tracing": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					Default:  false,
 				},
 
 				"detailed_error_messages": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					Default:  false,
 				},
@@ -1486,16 +1486,16 @@ func logsConfigSchema() *schema.Schema {
 	}
 }
 
-func applicationLogSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func applicationLogSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Optional: true,
 		Computed: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"file_system_level": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					Default:  "Off",
 					ValidateFunc: validation.StringInSlice([]string{
@@ -1513,15 +1513,15 @@ func applicationLogSchema() *schema.Schema {
 	}
 }
 
-func appLogBlobStorageSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func appLogBlobStorageSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Optional: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"level": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Required: true,
 					ValidateFunc: validation.StringInSlice([]string{
 						string(web.Error),
@@ -1532,12 +1532,12 @@ func appLogBlobStorageSchema() *schema.Schema {
 					}, false),
 				},
 				"sas_url": {
-					Type:      schema.TypeString,
+					Type:      pluginsdk.TypeString,
 					Required:  true,
 					Sensitive: true,
 				},
 				"retention_in_days": {
-					Type:     schema.TypeInt,
+					Type:     pluginsdk.TypeInt,
 					Required: true,
 					// TODO: Validation here?
 				},
@@ -1546,14 +1546,14 @@ func appLogBlobStorageSchema() *schema.Schema {
 	}
 }
 
-func httpLogSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func httpLogSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Optional: true,
 		Computed: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"file_system": httpLogFileSystemSchema(),
 
 				"azure_blob_storage": httpLogBlobStorageSchema(),
@@ -1562,21 +1562,21 @@ func httpLogSchema() *schema.Schema {
 	}
 }
 
-func httpLogFileSystemSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func httpLogFileSystemSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Optional: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"retention_in_mb": {
-					Type:         schema.TypeInt,
+					Type:         pluginsdk.TypeInt,
 					Required:     true,
 					ValidateFunc: validation.IntBetween(25, 100),
 				},
 
 				"retention_in_days": {
-					Type:         schema.TypeInt,
+					Type:         pluginsdk.TypeInt,
 					Required:     true,
 					ValidateFunc: validation.IntAtLeast(0),
 				},
@@ -1585,20 +1585,20 @@ func httpLogFileSystemSchema() *schema.Schema {
 	}
 }
 
-func httpLogBlobStorageSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func httpLogBlobStorageSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Optional: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"sas_url": {
-					Type:      schema.TypeString,
+					Type:      pluginsdk.TypeString,
 					Required:  true,
 					Sensitive: true,
 				},
 				"retention_in_days": {
-					Type:     schema.TypeInt,
+					Type:     pluginsdk.TypeInt,
 					Required: true,
 				},
 			},

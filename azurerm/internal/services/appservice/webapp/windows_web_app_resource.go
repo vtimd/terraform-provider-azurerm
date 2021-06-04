@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/services/web/mgmt/2020-12-01/web"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/location"
@@ -16,6 +15,7 @@ import (
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/appservice/parse"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/appservice/validate"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tags"
+	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/pluginsdk"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -58,10 +58,10 @@ var _ sdk.ResourceWithUpdate = WindowsWebAppResource{}
 // TODO - Feature: App Insights?
 // TODO - Feature: Auto healing?
 
-func (r WindowsWebAppResource) Arguments() map[string]*schema.Schema {
-	return map[string]*schema.Schema{
+func (r WindowsWebAppResource) Arguments() map[string]*pluginsdk.Schema {
+	return map[string]*pluginsdk.Schema{
 		"name": {
-			Type:         schema.TypeString,
+			Type:         pluginsdk.TypeString,
 			Required:     true,
 			ForceNew:     true,
 			ValidateFunc: validate.WebAppName,
@@ -72,7 +72,7 @@ func (r WindowsWebAppResource) Arguments() map[string]*schema.Schema {
 		"location": location.Schema(),
 
 		"service_plan_id": {
-			Type:         schema.TypeString,
+			Type:         pluginsdk.TypeString,
 			Required:     true,
 			ValidateFunc: validate.ServicePlanID,
 		},
@@ -80,11 +80,11 @@ func (r WindowsWebAppResource) Arguments() map[string]*schema.Schema {
 		// Optional
 
 		"app_settings": {
-			Type:     schema.TypeMap,
+			Type:     pluginsdk.TypeMap,
 			Optional: true,
 			Computed: true,
-			Elem: &schema.Schema{
-				Type: schema.TypeString,
+			Elem: &pluginsdk.Schema{
+				Type: pluginsdk.TypeString,
 			},
 		},
 
@@ -93,19 +93,19 @@ func (r WindowsWebAppResource) Arguments() map[string]*schema.Schema {
 		"backup": backupSchema(),
 
 		"client_affinity_enabled": {
-			Type:     schema.TypeBool,
+			Type:     pluginsdk.TypeBool,
 			Optional: true,
 			Default:  false,
 		},
 
 		"client_cert_enabled": {
-			Type:     schema.TypeBool,
+			Type:     pluginsdk.TypeBool,
 			Optional: true,
 			Default:  false,
 		},
 
 		"client_cert_mode": {
-			Type:     schema.TypeString,
+			Type:     pluginsdk.TypeString,
 			Optional: true,
 			Default:  "Required",
 			ValidateFunc: validation.StringInSlice([]string{
@@ -117,13 +117,13 @@ func (r WindowsWebAppResource) Arguments() map[string]*schema.Schema {
 		"connection_string": connectionStringSchema(),
 
 		"enabled": {
-			Type:     schema.TypeBool,
+			Type:     pluginsdk.TypeBool,
 			Optional: true,
 			Default:  true,
 		},
 
 		"https_only": {
-			Type:     schema.TypeBool,
+			Type:     pluginsdk.TypeBool,
 			Optional: true,
 			Default:  false,
 		},
@@ -140,55 +140,55 @@ func (r WindowsWebAppResource) Arguments() map[string]*schema.Schema {
 	}
 }
 
-func (r WindowsWebAppResource) Attributes() map[string]*schema.Schema {
-	return map[string]*schema.Schema{
+func (r WindowsWebAppResource) Attributes() map[string]*pluginsdk.Schema {
+	return map[string]*pluginsdk.Schema{
 		"custom_domain_verification_id": {
-			Type:      schema.TypeString,
+			Type:      pluginsdk.TypeString,
 			Computed:  true,
 			Sensitive: true,
 		},
 
 		"default_hostname": {
-			Type:     schema.TypeString,
+			Type:     pluginsdk.TypeString,
 			Computed: true,
 		},
 
 		"kind": {
-			Type:     schema.TypeString,
+			Type:     pluginsdk.TypeString,
 			Computed: true,
 		},
 
 		"app_metadata": {
-			Type:     schema.TypeMap,
+			Type:     pluginsdk.TypeMap,
 			Computed: true,
-			Elem: &schema.Schema{
-				Type: schema.TypeString,
+			Elem: &pluginsdk.Schema{
+				Type: pluginsdk.TypeString,
 			},
 		},
 
 		"outbound_ip_addresses": {
-			Type:     schema.TypeString,
+			Type:     pluginsdk.TypeString,
 			Computed: true,
 		},
 
 		"outbound_ip_address_list": {
-			Type:     schema.TypeList,
+			Type:     pluginsdk.TypeList,
 			Computed: true,
-			Elem: &schema.Schema{
-				Type: schema.TypeString,
+			Elem: &pluginsdk.Schema{
+				Type: pluginsdk.TypeString,
 			},
 		},
 
 		"possible_outbound_ip_addresses": {
-			Type:     schema.TypeString,
+			Type:     pluginsdk.TypeString,
 			Computed: true,
 		},
 
 		"possible_outbound_ip_address_list": {
-			Type:     schema.TypeList,
+			Type:     pluginsdk.TypeList,
 			Computed: true,
-			Elem: &schema.Schema{
-				Type: schema.TypeString,
+			Elem: &pluginsdk.Schema{
+				Type: pluginsdk.TypeString,
 			},
 		},
 
@@ -552,7 +552,7 @@ func (r WindowsWebAppResource) Delete() sdk.ResourceFunc {
 	}
 }
 
-func (r WindowsWebAppResource) IDValidationFunc() schema.SchemaValidateFunc {
+func (r WindowsWebAppResource) IDValidationFunc() pluginsdk.SchemaValidateFunc {
 	return validate.WebAppID
 }
 

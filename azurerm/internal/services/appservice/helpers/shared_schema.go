@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	msiParse "github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/msi/parse"
+	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/pluginsdk"
 
 	"github.com/Azure/azure-sdk-for-go/services/web/mgmt/2020-12-01/web"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/msi/validate"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
@@ -46,48 +46,48 @@ func (v IpRestriction) Validate() error {
 	return nil
 }
 
-func IpRestrictionSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:       schema.TypeList,
+func IpRestrictionSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:       pluginsdk.TypeList,
 		Optional:   true,
 		Computed:   true,
-		ConfigMode: schema.SchemaConfigModeAttr,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		ConfigMode: pluginsdk.SchemaConfigModeAttr,
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"ip_address": {
-					Type:         schema.TypeString,
+					Type:         pluginsdk.TypeString,
 					Optional:     true,
 					ValidateFunc: validation.StringIsNotEmpty,
 				},
 
 				"service_tag": {
-					Type:         schema.TypeString,
+					Type:         pluginsdk.TypeString,
 					Optional:     true,
 					ValidateFunc: validation.StringIsNotEmpty,
 				},
 
 				"virtual_network_subnet_id": {
-					Type:         schema.TypeString,
+					Type:         pluginsdk.TypeString,
 					Optional:     true,
 					ValidateFunc: validation.StringIsNotEmpty,
 				},
 
 				"name": {
-					Type:         schema.TypeString,
+					Type:         pluginsdk.TypeString,
 					Optional:     true,
 					Computed:     true,
 					ValidateFunc: validation.StringIsNotEmpty,
 				},
 
 				"priority": {
-					Type:         schema.TypeInt,
+					Type:         pluginsdk.TypeInt,
 					Optional:     true,
 					Default:      65000,
 					ValidateFunc: validation.IntBetween(1, 2147483647),
 				},
 
 				"action": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Default:  "Allow",
 					Optional: true,
 					ValidateFunc: validation.StringInSlice([]string{
@@ -102,50 +102,50 @@ func IpRestrictionSchema() *schema.Schema {
 	}
 }
 
-func IpRestrictionHeadersSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:       schema.TypeList,
+func IpRestrictionHeadersSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:       pluginsdk.TypeList,
 		MaxItems:   1,
 		Computed:   true,
 		Optional:   true,
-		ConfigMode: schema.SchemaConfigModeAttr,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		ConfigMode: pluginsdk.SchemaConfigModeAttr,
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"x_forwarded_host": {
-					Type:     schema.TypeList,
+					Type:     pluginsdk.TypeList,
 					MaxItems: 8,
 					Optional: true,
-					Elem: &schema.Schema{
-						Type: schema.TypeString,
+					Elem: &pluginsdk.Schema{
+						Type: pluginsdk.TypeString,
 					},
 				},
 
 				"x_forwarded_for": {
-					Type:     schema.TypeList,
+					Type:     pluginsdk.TypeList,
 					MaxItems: 8,
 					Optional: true,
-					Elem: &schema.Schema{
-						Type:         schema.TypeString,
+					Elem: &pluginsdk.Schema{
+						Type:         pluginsdk.TypeString,
 						ValidateFunc: validation.IsCIDR,
 					},
 				},
 
 				"x_azure_fdid": { // Front Door ID (UUID)
-					Type:     schema.TypeList,
+					Type:     pluginsdk.TypeList,
 					MaxItems: 8,
 					Optional: true,
-					Elem: &schema.Schema{
-						Type:         schema.TypeString,
+					Elem: &pluginsdk.Schema{
+						Type:         pluginsdk.TypeString,
 						ValidateFunc: validation.IsUUID,
 					},
 				},
 
 				"x_fd_health_probe": { // 1 or absent
-					Type:     schema.TypeList,
+					Type:     pluginsdk.TypeList,
 					Optional: true,
 					MaxItems: 1,
-					Elem: &schema.Schema{
-						Type: schema.TypeString,
+					Elem: &pluginsdk.Schema{
+						Type: pluginsdk.TypeString,
 						ValidateFunc: validation.StringInSlice([]string{
 							"1",
 						}, false),
@@ -163,26 +163,26 @@ type Identity struct {
 	TenantId    string   `tfschema:"tenant_id"`
 }
 
-func IdentitySchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func IdentitySchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Optional: true,
 		Computed: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"identity_ids": {
-					Type:     schema.TypeList,
+					Type:     pluginsdk.TypeList,
 					Optional: true,
 					MinItems: 1,
-					Elem: &schema.Schema{
-						Type:         schema.TypeString,
+					Elem: &pluginsdk.Schema{
+						Type:         pluginsdk.TypeString,
 						ValidateFunc: validate.UserAssignedIdentityID,
 					},
 				},
 
 				"type": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Required: true,
 					ValidateFunc: validation.StringInSlice([]string{
 						string(web.ManagedServiceIdentityTypeNone),
@@ -193,12 +193,12 @@ func IdentitySchema() *schema.Schema {
 				},
 
 				"principal_id": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Computed: true,
 				},
 
 				"tenant_id": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Computed: true,
 				},
 			},
@@ -211,24 +211,24 @@ type CorsSetting struct {
 	SupportCredentials bool     `tfschema:"support_credentials"`
 }
 
-func CorsSettingsSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func CorsSettingsSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Optional: true,
 		Computed: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"allowed_origins": {
-					Type:     schema.TypeSet,
+					Type:     pluginsdk.TypeSet,
 					Required: true,
-					Elem: &schema.Schema{
-						Type: schema.TypeString,
+					Elem: &pluginsdk.Schema{
+						Type: pluginsdk.TypeString,
 					},
 				},
 
 				"support_credentials": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					Default:  false,
 				},
@@ -246,41 +246,41 @@ type SourceControl struct {
 }
 
 // SourceControlSchema TODO - Make a separate resource
-func SourceControlSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:          schema.TypeList,
+func SourceControlSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:          pluginsdk.TypeList,
 		Optional:      true,
 		MaxItems:      1,
 		Computed:      true,
 		ConflictsWith: []string{"site_config.0.scm_type"},
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"repo_url": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					Computed: true,
 				},
 
 				"branch": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					Computed: true,
 				},
 
 				"manual_integration": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					Computed: true,
 				},
 
 				"use_mercurial": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					Computed: true,
 				},
 
 				"rollback_enabled": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					Computed: true,
 				},
@@ -294,19 +294,19 @@ type SiteCredential struct {
 	Password string `tfschema:"password"`
 }
 
-func SiteCredentialSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func SiteCredentialSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Computed: true,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"name": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Computed: true,
 				},
 
 				"password": {
-					Type:      schema.TypeString,
+					Type:      pluginsdk.TypeString,
 					Computed:  true,
 					Sensitive: true,
 				},
@@ -333,37 +333,37 @@ type AuthSettings struct {
 	TwitterAuth                 []TwitterAuthSettings   `tfschema:"twitter"`
 }
 
-func AuthSettingsSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func AuthSettingsSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Optional: true,
 		Computed: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"enabled": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Required: true,
 				},
 
 				"additional_login_params": {
-					Type:     schema.TypeMap,
+					Type:     pluginsdk.TypeMap,
 					Optional: true,
-					Elem: &schema.Schema{
-						Type: schema.TypeString,
+					Elem: &pluginsdk.Schema{
+						Type: pluginsdk.TypeString,
 					},
 				},
 
 				"allowed_external_redirect_urls": {
-					Type:     schema.TypeList,
+					Type:     pluginsdk.TypeList,
 					Optional: true,
-					Elem: &schema.Schema{
-						Type: schema.TypeString,
+					Elem: &pluginsdk.Schema{
+						Type: pluginsdk.TypeString,
 					},
 				},
 
 				"default_provider": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					ValidateFunc: validation.StringInSlice([]string{
 						string(web.BuiltInAuthenticationProviderAzureActiveDirectory),
@@ -376,31 +376,31 @@ func AuthSettingsSchema() *schema.Schema {
 				},
 
 				"issuer": {
-					Type:         schema.TypeString,
+					Type:         pluginsdk.TypeString,
 					Optional:     true,
 					ValidateFunc: validation.IsURLWithScheme([]string{"http", "https"}),
 				},
 
 				"runtime_version": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					Computed: true,
 				},
 
 				"token_refresh_extension_hours": {
-					Type:     schema.TypeFloat,
+					Type:     pluginsdk.TypeFloat,
 					Optional: true,
 					Default:  72,
 				},
 
 				"token_store_enabled": {
-					Type:     schema.TypeBool,
+					Type:     pluginsdk.TypeBool,
 					Optional: true,
 					Default:  false,
 				},
 
 				"unauthenticated_client_action": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					ValidateFunc: validation.StringInSlice([]string{
 						string(web.AllowAnonymous),
@@ -431,20 +431,20 @@ type AadAuthSettings struct {
 	AllowedAudiences        []string `tfschema:"allowed_audiences"`
 }
 
-func AadAuthSettingsSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func AadAuthSettingsSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Optional: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"client_id": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Required: true,
 				},
 
 				"client_secret": {
-					Type:      schema.TypeString,
+					Type:      pluginsdk.TypeString,
 					Optional:  true,
 					Sensitive: true,
 					ExactlyOneOf: []string{
@@ -454,7 +454,7 @@ func AadAuthSettingsSchema() *schema.Schema {
 				},
 
 				"client_secret_setting_name": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					ExactlyOneOf: []string{
 						"auth_settings.0.active_directory.0.client_secret",
@@ -463,10 +463,10 @@ func AadAuthSettingsSchema() *schema.Schema {
 				},
 
 				"allowed_audiences": {
-					Type:     schema.TypeList,
+					Type:     pluginsdk.TypeList,
 					Optional: true,
-					Elem: &schema.Schema{
-						Type: schema.TypeString,
+					Elem: &pluginsdk.Schema{
+						Type: pluginsdk.TypeString,
 					},
 				},
 			},
@@ -481,20 +481,20 @@ type FacebookAuthSettings struct {
 	OauthScopes          []string `tfschema:"oauth_scopes"`
 }
 
-func FacebookAuthSettingsSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func FacebookAuthSettingsSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Optional: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"app_id": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Required: true,
 				},
 
 				"app_secret": {
-					Type:      schema.TypeString,
+					Type:      pluginsdk.TypeString,
 					Optional:  true,
 					Sensitive: true,
 					ExactlyOneOf: []string{
@@ -504,7 +504,7 @@ func FacebookAuthSettingsSchema() *schema.Schema {
 				},
 
 				"app_secret_setting_name": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					ExactlyOneOf: []string{
 						"auth_settings.0.facebook.0.app_secret",
@@ -513,10 +513,10 @@ func FacebookAuthSettingsSchema() *schema.Schema {
 				},
 
 				"oauth_scopes": {
-					Type:     schema.TypeList,
+					Type:     pluginsdk.TypeList,
 					Optional: true,
-					Elem: &schema.Schema{
-						Type: schema.TypeString,
+					Elem: &pluginsdk.Schema{
+						Type: pluginsdk.TypeString,
 					},
 				},
 			},
@@ -531,20 +531,20 @@ type GoogleAuthSettings struct {
 	OauthScopes             []string `tfschema:"oauth_scopes"`
 }
 
-func GoogleAuthSettingsSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func GoogleAuthSettingsSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Optional: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"client_id": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Required: true,
 				},
 
 				"client_secret": {
-					Type:      schema.TypeString,
+					Type:      pluginsdk.TypeString,
 					Optional:  true,
 					Sensitive: true,
 					ExactlyOneOf: []string{
@@ -554,7 +554,7 @@ func GoogleAuthSettingsSchema() *schema.Schema {
 				},
 
 				"client_secret_setting_name": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					ExactlyOneOf: []string{
 						"auth_settings.0.google.0.client_secret",
@@ -563,9 +563,9 @@ func GoogleAuthSettingsSchema() *schema.Schema {
 				},
 
 				"oauth_scopes": {
-					Type:     schema.TypeList,
+					Type:     pluginsdk.TypeList,
 					Optional: true,
-					Elem:     &schema.Schema{Type: schema.TypeString},
+					Elem:     &pluginsdk.Schema{Type: pluginsdk.TypeString},
 				},
 			},
 		},
@@ -579,20 +579,20 @@ type MicrosoftAuthSettings struct {
 	OauthScopes             []string `tfschema:"oauth_scopes"`
 }
 
-func MicrosoftAuthSettingsSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func MicrosoftAuthSettingsSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Optional: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"client_id": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Required: true,
 				},
 
 				"client_secret": {
-					Type:      schema.TypeString,
+					Type:      pluginsdk.TypeString,
 					Optional:  true,
 					Sensitive: true,
 					ExactlyOneOf: []string{
@@ -602,7 +602,7 @@ func MicrosoftAuthSettingsSchema() *schema.Schema {
 				},
 
 				"client_secret_setting_name": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					ExactlyOneOf: []string{
 						"auth_settings.0.microsoft.0.client_secret",
@@ -611,9 +611,9 @@ func MicrosoftAuthSettingsSchema() *schema.Schema {
 				},
 
 				"oauth_scopes": {
-					Type:     schema.TypeList,
+					Type:     pluginsdk.TypeList,
 					Optional: true,
-					Elem:     &schema.Schema{Type: schema.TypeString},
+					Elem:     &pluginsdk.Schema{Type: pluginsdk.TypeString},
 				},
 			},
 		},
@@ -626,20 +626,20 @@ type TwitterAuthSettings struct {
 	ConsumerSecretSettingName string `tfschema:"consumer_secret_setting_name"`
 }
 
-func TwitterAuthSettingsSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func TwitterAuthSettingsSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Optional: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"consumer_key": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Required: true,
 				},
 
 				"consumer_secret": {
-					Type:      schema.TypeString,
+					Type:      pluginsdk.TypeString,
 					Optional:  true,
 					Sensitive: true,
 					ExactlyOneOf: []string{
@@ -649,7 +649,7 @@ func TwitterAuthSettingsSchema() *schema.Schema {
 				},
 
 				"consumer_secret_setting_name": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 				},
 			},
@@ -664,20 +664,20 @@ type GithubAuthSettings struct {
 	OAuthScopes             []string `tfschema:"oauth_scopes"`
 }
 
-func GithubAuthSettingsSchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeList,
+func GithubAuthSettingsSchema() *pluginsdk.Schema {
+	return &pluginsdk.Schema{
+		Type:     pluginsdk.TypeList,
 		Optional: true,
 		MaxItems: 1,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
+		Elem: &pluginsdk.Resource{
+			Schema: map[string]*pluginsdk.Schema{
 				"client_id": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Required: true,
 				},
 
 				"client_secret": {
-					Type:      schema.TypeString,
+					Type:      pluginsdk.TypeString,
 					Optional:  true,
 					Sensitive: true,
 					ExactlyOneOf: []string{
@@ -687,7 +687,7 @@ func GithubAuthSettingsSchema() *schema.Schema {
 				},
 
 				"client_secret_setting_name": {
-					Type:     schema.TypeString,
+					Type:     pluginsdk.TypeString,
 					Optional: true,
 					ExactlyOneOf: []string{
 						"auth_settings.0.github.0.client_secret",
@@ -696,10 +696,10 @@ func GithubAuthSettingsSchema() *schema.Schema {
 				},
 
 				"oauth_scopes": {
-					Type:     schema.TypeList,
+					Type:     pluginsdk.TypeList,
 					Optional: true,
-					Elem: &schema.Schema{
-						Type: schema.TypeString,
+					Elem: &pluginsdk.Schema{
+						Type: pluginsdk.TypeString,
 					},
 				},
 			},

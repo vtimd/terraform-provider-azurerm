@@ -436,6 +436,7 @@ func TestAccWindowsWebApp_withMultiStack(t *testing.T) {
 	})
 }
 
+// TODO - Needs more property tests for autoheal
 func TestAccWindowsWebApp_withAutoHelRules(t *testing.T) {
 	data := acceptance.BuildTestData(t, "azurerm_windows_web_app", "test")
 	r := WindowsWebAppResource{}

@@ -17,9 +17,6 @@ import (
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
-const osTypeWindows = "Windows"
-const osTypeLinux = "Linux"
-
 type SiteConfigWindows struct {
 	AlwaysOn                bool                      `tfschema:"always_on"`
 	ApiManagementConfigId   string                    `tfschema:"api_management_config_id"`
@@ -31,7 +28,7 @@ type SiteConfigWindows struct {
 	IpRestriction           []helpers.IpRestriction   `tfschema:"ip_restriction"`
 	ScmUseMainIpRestriction bool                      `tfschema:"scm_use_main_ip_restriction"`
 	ScmIpRestriction        []helpers.IpRestriction   `tfschema:"scm_ip_restriction"`
-	LoadBalancing           string                    `tfschema:"load_balancing_mode"` // TODO - New field to support, defaults to `LeastRequests`
+	LoadBalancing           string                    `tfschema:"load_balancing_mode"`
 	LocalMysql              bool                      `tfschema:"local_mysql"`
 	ManagedPipelineMode     string                    `tfschema:"managed_pipeline_mode"`
 	RemoteDebugging         bool                      `tfschema:"remote_debugging"`
@@ -49,22 +46,24 @@ type SiteConfigWindows struct {
 	AutoSwapSlotName        string                    `tfschema:"auto_swap_slot_name"`
 	Cors                    []helpers.CorsSetting     `tfschema:"cors"`
 	DetailedErrorLogging    bool                      `tfschema:"detailed_error_logging"`
-	LinuxFxVersion          string                    `tfschema:"linux_fx_version"`
 	WindowsFxVersion        string                    `tfschema:"windows_fx_version"`
 	// TODO new properties / blocks
-	// SiteLimits []SiteLimitsSettings `tfschema:"site_limits"` // TODO - New block to (possibly) support?
+	// SiteLimits []SiteLimitsSettings `tfschema:"site_limits"` // TODO - New block to (possibly) support? No way to configure this in the portal?
+	// PushSettings - Supported in SDK, but blocked by manual step needed for connecting app to notification hub.
 }
 
 type SiteConfigLinux struct {
 	AlwaysOn                bool                    `tfschema:"always_on"`
 	ApiManagementConfigId   string                  `tfschema:"api_management_config_id"`
 	AppCommandLine          string                  `tfschema:"app_command_line"`
+	AutoHeal                bool                    `tfschema:"auto_heal"`
+	AutoHealSettings        []AutoHealSettingLinux  `tfschema:"auto_heal_setting"`
 	DefaultDocuments        []string                `tfschema:"default_documents"`
 	Http2Enabled            bool                    `tfschema:"http2_enabled"`
 	IpRestriction           []helpers.IpRestriction `tfschema:"ip_restriction"`
 	ScmUseMainIpRestriction bool                    `tfschema:"scm_use_main_ip_restriction"`
 	ScmIpRestriction        []helpers.IpRestriction `tfschema:"scm_ip_restriction"`
-	LoadBalancing           string                  `tfschema:"load_balancing_mode"` // TODO - New field to support, defaults to `LeastRequests`
+	LoadBalancing           string                  `tfschema:"load_balancing_mode"`
 	LocalMysql              bool                    `tfschema:"local_mysql"`
 	ManagedPipelineMode     string                  `tfschema:"managed_pipeline_mode"`
 	RemoteDebugging         bool                    `tfschema:"remote_debugging"`
@@ -82,13 +81,7 @@ type SiteConfigLinux struct {
 	Cors                    []helpers.CorsSetting   `tfschema:"cors"`
 	DetailedErrorLogging    bool                    `tfschema:"detailed_error_logging"`
 	LinuxFxVersion          string                  `tfschema:"linux_fx_version"`
-	WindowsFxVersion        string                  `tfschema:"windows_fx_version"`
-	// Push  []PushSetting `tfschema:"push"` // TODO - new block to (possibly) support?
-	// SiteLimits []SiteLimitsSettings `tfschema:"site_limits"` // TODO - New block to (possibly) support?
-	// VirtualApplications []VirtualApplications //TODO - New (computed?) block to (possibly) support?
-	// TODO fields
-	// AutoHeal bool
-	// AutoHealRules []AutoHealRule
+	// SiteLimits []SiteLimitsSettings `tfschema:"site_limits"` // TODO - New block to (possibly) support? No way to configure this in the portal?
 }
 
 func siteConfigSchemaWindows() *pluginsdk.Schema {
@@ -935,6 +928,7 @@ func autoHealActionSchemaLinux() *pluginsdk.Schema {
 	}
 }
 
+// (@jackofallops) - trigger schemas intentionally left long-hand for now
 func autoHealTriggerSchemaWindows() *pluginsdk.Schema {
 	return &pluginsdk.Schema{
 		Type:     pluginsdk.TypeList,
@@ -1049,6 +1043,7 @@ func autoHealTriggerSchemaWindows() *pluginsdk.Schema {
 	}
 }
 
+// (@jackofallops) - trigger schemas intentionally left long-hand for now
 func autoHealTriggerSchemaLinux() *pluginsdk.Schema {
 	return &pluginsdk.Schema{
 		Type:     pluginsdk.TypeList,
@@ -1882,6 +1877,11 @@ func expandSiteConfigLinux(siteConfig []SiteConfigLinux) (*web.SiteConfig, error
 		expanded.Cors = helpers.ExpandCorsSettings(linuxSiteConfig.Cors)
 	}
 
+	expanded.AutoHealEnabled = utils.Bool(linuxSiteConfig.AutoHeal)
+	if len(linuxSiteConfig.AutoHealSettings) != 0 {
+		expanded.AutoHealRules = expandAutoHealSettingsLinux(linuxSiteConfig.AutoHealSettings)
+	}
+
 	return expanded, nil
 }
 
@@ -2271,10 +2271,6 @@ func flattenSiteConfigWindows(appSiteConfig *web.SiteConfig) []SiteConfigWindows
 
 	siteConfig.VirtualApplications = flattenVirtualApplications(appSiteConfig.VirtualApplications)
 
-	if appSiteConfig.LinuxFxVersion != nil {
-		siteConfig.LinuxFxVersion = *appSiteConfig.LinuxFxVersion
-	}
-
 	if appSiteConfig.AutoSwapSlotName != nil {
 		siteConfig.AutoSwapSlotName = *appSiteConfig.AutoSwapSlotName
 	}
@@ -2396,6 +2392,9 @@ func flattenSiteConfigLinux(appSiteConfig *web.SiteConfig) []SiteConfigLinux {
 		}
 		siteConfig.Cors = []helpers.CorsSetting{cors}
 	}
+
+	siteConfig.AutoHeal = *appSiteConfig.AutoHealEnabled
+	siteConfig.AutoHealSettings = flattenAutoHealSettingsLinux(appSiteConfig.AutoHealRules)
 
 	return []SiteConfigLinux{siteConfig}
 }
@@ -2661,5 +2660,144 @@ func flattenAutoHealSettingsWindows(autoHealRules *web.AutoHealRules) []AutoHeal
 	return []AutoHealSettingWindows{{
 		Triggers: []AutoHealTriggerWindows{resultTrigger},
 		Actions:  []AutoHealActionWindows{resultActions},
+	}}
+}
+
+func expandAutoHealSettingsLinux(autoHealSettings []AutoHealSettingLinux) *web.AutoHealRules {
+	if len(autoHealSettings) == 0 {
+		return nil
+	}
+
+	result := &web.AutoHealRules{
+		Triggers: &web.AutoHealTriggers{},
+		Actions:  &web.AutoHealActions{},
+	}
+
+	autoHeal := autoHealSettings[0]
+
+	triggers := autoHeal.Triggers[0]
+	if len(triggers.Requests) == 1 {
+		result.Triggers.Requests = &web.RequestsBasedTrigger{
+			Count:        utils.Int32(int32(triggers.Requests[0].Count)),
+			TimeInterval: utils.String(triggers.Requests[0].Interval),
+		}
+	}
+
+	if len(triggers.StatusCodes) > 0 {
+		statusCodeTriggers := make([]web.StatusCodesBasedTrigger, 0)
+		statusCodeRangeTriggers := make([]web.StatusCodesRangeBasedTrigger, 0)
+		for _, s := range triggers.StatusCodes {
+			statusCodeTrigger := web.StatusCodesBasedTrigger{}
+			statusCodeRangeTrigger := web.StatusCodesRangeBasedTrigger{}
+			parts := strings.Split(s.StatusCodeRange, "-")
+			if len(parts) == 2 {
+				statusCodeRangeTrigger.StatusCodes = utils.String(s.StatusCodeRange)
+				statusCodeRangeTrigger.Count = utils.Int32(int32(s.Count))
+				statusCodeRangeTrigger.TimeInterval = utils.String(s.Interval)
+				if s.Path != "" {
+					statusCodeRangeTrigger.Path = utils.String(s.Path)
+				}
+				statusCodeRangeTriggers = append(statusCodeRangeTriggers, statusCodeRangeTrigger)
+			} else {
+				statusCode, err := strconv.Atoi(s.StatusCodeRange)
+				if err == nil {
+					statusCodeTrigger.Status = utils.Int32(int32(statusCode))
+				}
+				statusCodeTrigger.Count = utils.Int32(int32(s.Count))
+				statusCodeTrigger.TimeInterval = utils.String(s.Interval)
+				if s.Path != "" {
+					statusCodeTrigger.Path = utils.String(s.Path)
+				}
+				statusCodeTriggers = append(statusCodeTriggers, statusCodeTrigger)
+			}
+		}
+		result.Triggers.StatusCodes = &statusCodeTriggers
+		result.Triggers.StatusCodesRange = &statusCodeRangeTriggers
+	}
+
+	action := autoHeal.Actions[0]
+	result.Actions.ActionType = web.AutoHealActionType(action.ActionType)
+	result.Actions.MinProcessExecutionTime = utils.String(action.MinimumProcessTime)
+
+	return result
+}
+
+func flattenAutoHealSettingsLinux(autoHealRules *web.AutoHealRules) []AutoHealSettingLinux {
+	if autoHealRules == nil {
+		return nil
+	}
+
+	resultTrigger := AutoHealTriggerLinux{}
+	resultActions := AutoHealActionLinux{}
+	// Triggers
+	if autoHealRules.Triggers != nil {
+		triggers := *autoHealRules.Triggers
+		if triggers.Requests != nil {
+			count := 0
+			if triggers.Requests.Count != nil {
+				count = int(*triggers.Requests.Count)
+			}
+			resultTrigger.Requests = []AutoHealRequestTrigger{{
+				Count:    count,
+				Interval: utils.NormalizeNilableString(triggers.Requests.TimeInterval),
+			}}
+		}
+
+		statusCodeTriggers := make([]AutoHealStatusCodeTrigger, 0)
+		if triggers.StatusCodes != nil {
+			for _, s := range *triggers.StatusCodes {
+				t := AutoHealStatusCodeTrigger{
+					Interval: utils.NormalizeNilableString(s.TimeInterval),
+					Path:     utils.NormalizeNilableString(s.Path),
+				}
+
+				if s.Status != nil {
+					t.StatusCodeRange = strconv.Itoa(int(*s.Status))
+				}
+
+				if s.Count != nil {
+					t.Count = int(*s.Count)
+				}
+
+				if s.SubStatus != nil {
+					t.SubStatus = int(*s.SubStatus)
+				}
+				statusCodeTriggers = append(statusCodeTriggers, t)
+			}
+		}
+		resultTrigger.StatusCodes = statusCodeTriggers
+
+		slowRequestTriggers := make([]AutoHealSlowRequest, 0)
+		if triggers.SlowRequests != nil {
+			slowRequestTriggers = append(slowRequestTriggers, AutoHealSlowRequest{
+				TimeTaken: utils.NormalizeNilableString(triggers.SlowRequests.TimeTaken),
+				Interval:  utils.NormalizeNilableString(triggers.SlowRequests.TimeInterval),
+				Count:     int(utils.NormaliseNilableInt32(triggers.SlowRequests.Count)),
+				Path:      utils.NormalizeNilableString(triggers.SlowRequests.Path),
+			})
+		}
+		resultTrigger.SlowRequests = slowRequestTriggers
+	}
+
+	// Actions
+	if autoHealRules.Actions != nil {
+		actions := *autoHealRules.Actions
+		customActions := make([]AutoHealCustomAction, 0)
+		if actions.CustomAction != nil {
+			customActions = append(customActions, AutoHealCustomAction{
+				Executable: utils.NormalizeNilableString(actions.CustomAction.Exe),
+				Parameters: utils.NormalizeNilableString(actions.CustomAction.Parameters),
+			})
+		}
+
+		resultActions = AutoHealActionLinux{
+			ActionType:         string(actions.ActionType),
+			MinimumProcessTime: utils.NormalizeNilableString(actions.MinProcessExecutionTime),
+		}
+	}
+
+	return []AutoHealSettingLinux{{
+		Triggers: []AutoHealTriggerLinux{resultTrigger},
+		Actions:  []AutoHealActionLinux{resultActions},
 	}}
 }

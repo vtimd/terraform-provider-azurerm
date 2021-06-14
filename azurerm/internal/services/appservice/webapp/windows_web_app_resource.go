@@ -573,8 +573,10 @@ func (r WindowsWebAppResource) Update() sdk.ResourceFunc {
 				return fmt.Errorf("decoding: %+v", err)
 			}
 
-			sitePatch := web.SitePatchResource{
-				SitePatchResourceProperties: &web.SitePatchResourceProperties{
+			site := web.Site{
+				Location: utils.String(state.Location),
+				Tags:     tags.FromTypedObject(state.Tags),
+				SiteProperties: &web.SiteProperties{
 					ServerFarmID:          utils.String(state.ServicePlanId),
 					Enabled:               utils.Bool(state.Enabled),
 					HTTPSOnly:             utils.Bool(state.HttpsOnly),
@@ -590,9 +592,13 @@ func (r WindowsWebAppResource) Update() sdk.ResourceFunc {
 				return fmt.Errorf("expanding Site Config for Windows Web App %s: %+v", id, err)
 			}
 
-			sitePatch.SiteConfig = siteConfig
-			if _, err = client.Update(ctx, id.ResourceGroup, id.SiteName, sitePatch); err != nil {
+			site.SiteConfig = siteConfig
+			updateFuture, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.SiteName, site)
+			if err != nil {
 				return fmt.Errorf("updating Windows Web App %s: %+v", id, err)
+			}
+			if err := updateFuture.WaitForCompletionRef(ctx, client.Client); err != nil {
+				return fmt.Errorf("wating to update %s: %+v", id, err)
 			}
 
 			if currentStack != nil && *currentStack != "" {

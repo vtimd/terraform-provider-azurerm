@@ -436,7 +436,7 @@ func TestAccWindowsWebApp_withMultiStack(t *testing.T) {
 }
 
 // TODO - Needs more property tests for autoheal
-func TestAccWindowsWebApp_withAutoHelRules(t *testing.T) {
+func TestAccWindowsWebApp_withAutoHealRules(t *testing.T) {
 	data := acceptance.BuildTestData(t, "azurerm_windows_web_app", "test")
 	r := WindowsWebAppResource{}
 
@@ -447,6 +447,43 @@ func TestAccWindowsWebApp_withAutoHelRules(t *testing.T) {
 				check.That(data.ResourceName).ExistsInAzure(r),
 			),
 		},
+		data.ImportStep(),
+	})
+}
+
+func TestAccWindowsWebApp_withAutoHealRulesUpdate(t *testing.T) {
+	data := acceptance.BuildTestData(t, "azurerm_windows_web_app", "test")
+	r := WindowsWebAppResource{}
+
+	data.ResourceTest(t, r, []resource.TestStep{
+		{
+			Config: r.basic(data),
+			Check: resource.ComposeTestCheckFunc(
+				check.That(data.ResourceName).ExistsInAzure(r),
+			),
+		},
+		data.ImportStep(),
+		{
+			Config: r.autoHealRules(data),
+			Check: resource.ComposeTestCheckFunc(
+				check.That(data.ResourceName).ExistsInAzure(r),
+			),
+		},
+		data.ImportStep(),
+		{
+			Config: r.autoHealRulesUpdate(data),
+			Check: resource.ComposeTestCheckFunc(
+				check.That(data.ResourceName).ExistsInAzure(r),
+			),
+		},
+		data.ImportStep(),
+		{
+			Config: r.basic(data),
+			Check: resource.ComposeTestCheckFunc(
+				check.That(data.ResourceName).ExistsInAzure(r),
+			),
+		},
+		data.ImportStep(),
 	})
 }
 
@@ -839,6 +876,23 @@ resource "azurerm_windows_web_app" "test" {
 
       support_credentials = true
     }
+
+    auto_heal = true
+
+    auto_heal_setting {
+      trigger {
+        status_code {
+          status_code_range = "500"
+          interval          = "00:05:00"
+          count             = 10
+        }
+      }
+
+      action {
+        action_type                    = "Recycle"
+        minimum_process_execution_time = "00:05:00"
+      }
+    }
     // auto_swap_slot_name = // TODO - Not supported yet
   }
 
@@ -1133,6 +1187,42 @@ resource "azurerm_windows_web_app" "test" {
       action {
         action_type                    = "Recycle"
         minimum_process_execution_time = "00:05:00"
+      }
+    }
+  }
+}
+`, r.baseTemplate(data), data.RandomInteger)
+}
+
+func (r WindowsWebAppResource) autoHealRulesUpdate(data acceptance.TestData) string {
+	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
+%s
+
+resource "azurerm_windows_web_app" "test" {
+  name                = "acctestWA-%d"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
+  service_plan_id     = azurerm_service_plan.test.id
+
+  site_config {
+    auto_heal = true
+
+    auto_heal_setting {
+      trigger {
+        status_code {
+          status_code_range = "500"
+          interval          = "00:01:00"
+          count             = 10
+        }
+      }
+
+      action {
+        action_type                    = "LogEvent"
+        minimum_process_execution_time = "00:10:00"
       }
     }
   }

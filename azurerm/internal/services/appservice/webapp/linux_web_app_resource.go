@@ -556,8 +556,10 @@ func (r LinuxWebAppResource) Update() sdk.ResourceFunc {
 				return fmt.Errorf("decoding: %+v", err)
 			}
 
-			sitePatch := web.SitePatchResource{
-				SitePatchResourceProperties: &web.SitePatchResourceProperties{
+			site := web.Site{
+				Location: utils.String(state.Location),
+				Tags:     tags.FromTypedObject(state.Tags),
+				SiteProperties: &web.SiteProperties{
 					ServerFarmID:          utils.String(state.ServicePlanId),
 					Enabled:               utils.Bool(state.Enabled),
 					HTTPSOnly:             utils.Bool(state.HttpsOnly),
@@ -573,9 +575,13 @@ func (r LinuxWebAppResource) Update() sdk.ResourceFunc {
 				return fmt.Errorf("expanding Site Config for Linux Web App %s: %+v", id, err)
 			}
 
-			sitePatch.SiteConfig = siteConfig
-			if _, err = client.Update(ctx, id.ResourceGroup, id.SiteName, sitePatch); err != nil {
+			site.SiteConfig = siteConfig
+			updateFuture, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.SiteName, site)
+			if err != nil {
 				return fmt.Errorf("updating Linux Web App %s: %+v", id, err)
+			}
+			if err := updateFuture.WaitForCompletionRef(ctx, client.Client); err != nil {
+				return fmt.Errorf("waiting to update %s: %+v", id, err)
 			}
 
 			// (@jackofallops) - App Settings can clobber logs configuration so must be updated before we send any Log updates

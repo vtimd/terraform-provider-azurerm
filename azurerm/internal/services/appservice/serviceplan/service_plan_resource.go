@@ -3,24 +3,21 @@ package serviceplan
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/services/web/mgmt/2020-12-01/web"
-
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/validation"
-
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
-
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/appservice/parse"
-
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/helpers/azure"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/location"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/sdk"
+	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/appservice/parse"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/appservice/validate"
 	webValidate "github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/web/validate"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tags"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/pluginsdk"
+	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/validation"
+	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
 type AppServicePlanResource struct{}
@@ -68,7 +65,20 @@ func (r AppServicePlanResource) Arguments() map[string]*schema.Schema {
 		"sku_name": {
 			Type:     pluginsdk.TypeString,
 			Required: true,
-			// TODO - Validation
+			ValidateFunc: validation.StringInSlice([]string{
+				"B1", "B2", "B3",
+				"D1",
+				"F1",
+				"FREE",
+				"I1", "I2", "I3", // Isolated V1 - ASEV2
+				"I1v2", "I2v2", "I3v2", // Isolated v2 - ASEv3
+				"P1v2", "P2v2", "P3v2",
+				"P1v3", "P2v3", "P3v3",
+				"S1", "S2", "S3",
+				"SHARED",
+				"PC2", "PC3", "PC4", // Consumption Plans - Function Apps
+				"EP1", "EP2", "EP3", // Elastic Premium Plans - Function Apps
+			}, false),
 			// Note - need to look at Isolated as separate property via ExactlyOneOf?
 		},
 
@@ -171,6 +181,9 @@ func (r AppServicePlanResource) Create() sdk.ResourceFunc {
 			}
 
 			if servicePlan.MaximumElasticWorkerCount > 0 {
+				if !strings.HasPrefix(servicePlan.Sku, "EP") && !strings.HasPrefix(servicePlan.Sku, "PC") {
+					return fmt.Errorf("`maximum_elastic_worker_count` can only be specified with Elastic Premium Skus")
+				}
 				appServicePlan.AppServicePlanProperties.MaximumElasticWorkerCount = utils.Int32(int32(servicePlan.MaximumElasticWorkerCount))
 			}
 
@@ -239,10 +252,6 @@ func (r AppServicePlanResource) Read() sdk.ResourceFunc {
 					state.OSType = OSTypeLinux
 				}
 
-				if props.MaximumElasticWorkerCount != nil {
-					state.MaximumElasticWorkerCount = int(*props.MaximumElasticWorkerCount)
-				}
-
 				if ase := props.HostingEnvironmentProfile; ase != nil && ase.ID != nil {
 					state.AppServiceEnvironmentId = *ase.ID
 				}
@@ -288,6 +297,51 @@ func (r AppServicePlanResource) Update() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: 60 * time.Minute,
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
+			id, err := parse.ServicePlanID(metadata.ResourceData.Id())
+			if err != nil {
+				return err
+			}
+
+			client := metadata.Client.AppService.ServicePlanClient
+
+			var state AppServicePlanModel
+			if err := metadata.Decode(&state); err != nil {
+				return fmt.Errorf("decoding: %+v", err)
+			}
+
+			appServicePlan := web.AppServicePlan{
+				AppServicePlanProperties: &web.AppServicePlanProperties{
+					PerSiteScaling: utils.Bool(state.PerSiteScaling),
+					Reserved:       utils.Bool(state.OSType == OSTypeLinux),
+					HyperV:         utils.Bool(state.OSType == OSTypeWindowsContainer),
+				},
+				Sku: &web.SkuDescription{
+					Name: utils.String(state.Sku),
+				},
+				Location: utils.String(location.Normalize(state.Location)),
+				Tags:     tags.FromTypedObject(state.Tags),
+			}
+
+			if state.NumberOfWorkers != 0 {
+				appServicePlan.Sku.Capacity = utils.Int32(int32(state.NumberOfWorkers))
+			}
+
+			if state.MaximumElasticWorkerCount != 0 {
+				if metadata.ResourceData.HasChange("maximum_elastic_worker_count") && !strings.HasPrefix(state.Sku, "EP") && !strings.HasPrefix(state.Sku, "PC") {
+					return fmt.Errorf("`maximum_elastic_worker_count` can only be specified with Elastic Premium Skus")
+				}
+				appServicePlan.AppServicePlanProperties.MaximumElasticWorkerCount = utils.Int32(int32(state.MaximumElasticWorkerCount))
+			}
+
+			future, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.ServerfarmName, appServicePlan)
+			if err != nil {
+				return fmt.Errorf("updating %s: %+v", id, err)
+			}
+
+			if err := future.WaitForCompletionRef(ctx, client.Client); err != nil {
+				return fmt.Errorf("waiting for update to %s: %+v", id, err)
+			}
+
 			return nil
 		},
 	}

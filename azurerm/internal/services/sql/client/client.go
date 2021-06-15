@@ -7,18 +7,19 @@ import (
 )
 
 type Client struct {
-	DatabasesClient                            *sql.DatabasesClient
-	DatabaseThreatDetectionPoliciesClient      *sql.DatabaseThreatDetectionPoliciesClient
-	ElasticPoolsClient                         *sql.ElasticPoolsClient
-	DatabaseExtendedBlobAuditingPoliciesClient *sql.ExtendedDatabaseBlobAuditingPoliciesClient
-	FirewallRulesClient                        *sql.FirewallRulesClient
-	FailoverGroupsClient                       *sql.FailoverGroupsClient
-	ManagedInstancesClient                     *msi.ManagedInstancesClient
-	ServersClient                              *sql.ServersClient
-	ServerExtendedBlobAuditingPoliciesClient   *sql.ExtendedServerBlobAuditingPoliciesClient
-	ServerConnectionPoliciesClient             *sql.ServerConnectionPoliciesClient
-	ServerAzureADAdministratorsClient          *sql.ServerAzureADAdministratorsClient
-	VirtualNetworkRulesClient                  *sql.VirtualNetworkRulesClient
+	DatabasesClient                               *sql.DatabasesClient
+	DatabaseThreatDetectionPoliciesClient         *sql.DatabaseThreatDetectionPoliciesClient
+	ElasticPoolsClient                            *sql.ElasticPoolsClient
+	DatabaseExtendedBlobAuditingPoliciesClient    *sql.ExtendedDatabaseBlobAuditingPoliciesClient
+	FirewallRulesClient                           *sql.FirewallRulesClient
+	FailoverGroupsClient                          *sql.FailoverGroupsClient
+	ManagedInstancesClient                        *msi.ManagedInstancesClient
+	ManagedInstanceVulnerabilityAssessmentsClient *msi.ManagedInstanceVulnerabilityAssessmentsClient
+	ServersClient                                 *sql.ServersClient
+	ServerExtendedBlobAuditingPoliciesClient      *sql.ExtendedServerBlobAuditingPoliciesClient
+	ServerConnectionPoliciesClient                *sql.ServerConnectionPoliciesClient
+	ServerAzureADAdministratorsClient             *sql.ServerAzureADAdministratorsClient
+	VirtualNetworkRulesClient                     *sql.VirtualNetworkRulesClient
 }
 
 func NewClient(o *common.ClientOptions) *Client {
@@ -44,6 +45,9 @@ func NewClient(o *common.ClientOptions) *Client {
 	managedInstancesClient := msi.NewManagedInstancesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&managedInstancesClient.Client, o.ResourceManagerAuthorizer)
 
+	managedInstanceVulnerabilityAssessmentsClient := msi.NewManagedInstanceVulnerabilityAssessmentsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
+	o.ConfigureClient(&managedInstanceVulnerabilityAssessmentsClient.Client, o.ResourceManagerAuthorizer)
+
 	serversClient := sql.NewServersClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&serversClient.Client, o.ResourceManagerAuthorizer)
 
@@ -61,16 +65,17 @@ func NewClient(o *common.ClientOptions) *Client {
 
 	return &Client{
 		DatabasesClient: &databasesClient,
-		DatabaseExtendedBlobAuditingPoliciesClient: &databaseExtendedBlobAuditingPoliciesClient,
-		DatabaseThreatDetectionPoliciesClient:      &databaseThreatDetectionPoliciesClient,
-		ElasticPoolsClient:                         &elasticPoolsClient,
-		FailoverGroupsClient:                       &failoverGroupsClient,
-		FirewallRulesClient:                        &firewallRulesClient,
-		ManagedInstancesClient:                     &managedInstancesClient,
-		ServersClient:                              &serversClient,
-		ServerAzureADAdministratorsClient:          &serverAzureADAdministratorsClient,
-		ServerConnectionPoliciesClient:             &serverConnectionPoliciesClient,
-		ServerExtendedBlobAuditingPoliciesClient:   &serverExtendedBlobAuditingPoliciesClient,
-		VirtualNetworkRulesClient:                  &virtualNetworkRulesClient,
+		DatabaseExtendedBlobAuditingPoliciesClient:    &databaseExtendedBlobAuditingPoliciesClient,
+		DatabaseThreatDetectionPoliciesClient:         &databaseThreatDetectionPoliciesClient,
+		ElasticPoolsClient:                            &elasticPoolsClient,
+		FailoverGroupsClient:                          &failoverGroupsClient,
+		FirewallRulesClient:                           &firewallRulesClient,
+		ManagedInstancesClient:                        &managedInstancesClient,
+		ManagedInstanceVulnerabilityAssessmentsClient: &managedInstanceVulnerabilityAssessmentsClient,
+		ServersClient:                                 &serversClient,
+		ServerAzureADAdministratorsClient:             &serverAzureADAdministratorsClient,
+		ServerConnectionPoliciesClient:                &serverConnectionPoliciesClient,
+		ServerExtendedBlobAuditingPoliciesClient:      &serverExtendedBlobAuditingPoliciesClient,
+		VirtualNetworkRulesClient:                     &virtualNetworkRulesClient,
 	}
 }

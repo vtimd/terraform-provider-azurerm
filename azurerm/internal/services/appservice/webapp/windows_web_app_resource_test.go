@@ -487,6 +487,21 @@ func TestAccWindowsWebApp_withAutoHealRulesUpdate(t *testing.T) {
 	})
 }
 
+func TestAccWindowsWebApp_withAutoHealRulesStatusCodeRange(t *testing.T) {
+	data := acceptance.BuildTestData(t, "azurerm_windows_web_app", "test")
+	r := WindowsWebAppResource{}
+
+	data.ResourceTest(t, r, []resource.TestStep{
+		{
+			Config: r.autoHealRulesStatusCodeRange(data),
+			Check: resource.ComposeTestCheckFunc(
+				check.That(data.ResourceName).ExistsInAzure(r),
+			),
+		},
+		data.ImportStep(),
+	})
+}
+
 func (r WindowsWebAppResource) Exists(ctx context.Context, client *clients.Client, state *pluginsdk.InstanceState) (*bool, error) {
 	id, err := parse.WebAppID(state.ID)
 	if err != nil {
@@ -1218,11 +1233,52 @@ resource "azurerm_windows_web_app" "test" {
           interval          = "00:01:00"
           count             = 10
         }
+        status_code {
+          status_code_range = "400-404"
+          interval          = "00:10:00"
+          count             = 10
+        }
       }
 
       action {
         action_type                    = "LogEvent"
         minimum_process_execution_time = "00:10:00"
+      }
+    }
+  }
+}
+`, r.baseTemplate(data), data.RandomInteger)
+}
+
+func (r WindowsWebAppResource) autoHealRulesStatusCodeRange(data acceptance.TestData) string {
+	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
+%s
+
+resource "azurerm_windows_web_app" "test" {
+  name                = "acctestWA-%d"
+  location            = azurerm_resource_group.test.location
+  resource_group_name = azurerm_resource_group.test.name
+  service_plan_id     = azurerm_service_plan.test.id
+
+  site_config {
+    auto_heal = true
+
+    auto_heal_setting {
+      trigger {
+        status_code {
+          status_code_range = "500-599"
+          interval          = "00:01:00"
+          count             = 10
+        }
+      }
+
+      action {
+        action_type                    = "Recycle"
+        minimum_process_execution_time = "00:05:00"
       }
     }
   }

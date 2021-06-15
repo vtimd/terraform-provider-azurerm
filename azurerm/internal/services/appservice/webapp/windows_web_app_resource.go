@@ -539,7 +539,7 @@ func (r WindowsWebAppResource) Delete() sdk.ResourceFunc {
 
 			metadata.Logger.Infof("deleting %s", id)
 
-			deleteMetrics := true
+			deleteMetrics := true // TODO - Look at making this a feature flag?
 			deleteEmptyServerFarm := false
 			if resp, err := client.Delete(ctx, id.ResourceGroup, id.SiteName, &deleteMetrics, &deleteEmptyServerFarm); err != nil {
 				if !utils.ResponseWasNotFound(resp) {

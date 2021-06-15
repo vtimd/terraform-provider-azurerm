@@ -769,7 +769,7 @@ type AutoHealSettingLinux struct {
 
 type AutoHealTriggerWindows struct {
 	Requests        []AutoHealRequestTrigger    `tfschema:"requests"`
-	PrivateMemoryKB int                         `tfschema:"private_memory_kb"` // Private should be > 102400 KB (100 MB) to 13631488 KB (13 GB)
+	PrivateMemoryKB int                         `tfschema:"private_memory_kb"` // Private should be > 102400 KB (100 MB) to 13631488 KB (13 GB), defaults to 0 however and is always present.
 	StatusCodes     []AutoHealStatusCodeTrigger `tfschema:"status_code"`       // 0 or more, ranges split by `-`, ranges cannot use sub-status or win32 code
 	SlowRequests    []AutoHealSlowRequest       `tfschema:"slow_request"`
 }
@@ -960,7 +960,7 @@ func autoHealTriggerSchemaWindows() *pluginsdk.Schema {
 				"private_memory_kb": {
 					Type:         pluginsdk.TypeInt,
 					Optional:     true,
-					Computed:     true,
+					Default:      0,
 					ValidateFunc: validation.IntBetween(102400, 13631488),
 				},
 
@@ -2622,6 +2622,22 @@ func flattenAutoHealSettingsWindows(autoHealRules *web.AutoHealRules) []AutoHeal
 
 				if s.SubStatus != nil {
 					t.SubStatus = int(*s.SubStatus)
+				}
+				statusCodeTriggers = append(statusCodeTriggers, t)
+			}
+		}
+		if triggers.StatusCodesRange != nil {
+			for _, s := range *triggers.StatusCodesRange {
+				t := AutoHealStatusCodeTrigger{
+					Interval: utils.NormalizeNilableString(s.TimeInterval),
+					Path:     utils.NormalizeNilableString(s.Path),
+				}
+				if s.Count != nil {
+					t.Count = int(*s.Count)
+				}
+
+				if s.StatusCodes != nil {
+					t.StatusCodeRange = *s.StatusCodes
 				}
 				statusCodeTriggers = append(statusCodeTriggers, t)
 			}

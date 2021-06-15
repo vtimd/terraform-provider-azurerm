@@ -180,6 +180,15 @@ func (r AppServicePlanResource) Create() sdk.ResourceFunc {
 				Tags:     tags.FromTypedObject(servicePlan.Tags),
 			}
 
+			if servicePlan.AppServiceEnvironmentId != "" {
+				if !strings.HasPrefix(servicePlan.Sku, "I") {
+					return fmt.Errorf("App Service Environment based Service Plans can only be used with Isolated SKUs")
+				}
+				appServicePlan.AppServicePlanProperties.HostingEnvironmentProfile = &web.HostingEnvironmentProfile{
+					ID: utils.String(servicePlan.AppServiceEnvironmentId),
+				}
+			}
+
 			if servicePlan.MaximumElasticWorkerCount > 0 {
 				if !strings.HasPrefix(servicePlan.Sku, "EP") && !strings.HasPrefix(servicePlan.Sku, "PC") {
 					return fmt.Errorf("`maximum_elastic_worker_count` can only be specified with Elastic Premium Skus")

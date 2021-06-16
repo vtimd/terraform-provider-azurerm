@@ -1194,7 +1194,7 @@ func flattenIpRestrictionHeaders(headers map[string][]string) []IpRestrictionHea
 		ipRestrictionHeader.XAzureFDID = xAzureFDID
 	}
 
-	if xFDHealthProbe, ok := headers["x-fc-healthprobe"]; ok {
+	if xFDHealthProbe, ok := headers["x-fd-healthprobe"]; ok {
 		ipRestrictionHeader.XFDHealthProbe = xFDHealthProbe
 	}
 

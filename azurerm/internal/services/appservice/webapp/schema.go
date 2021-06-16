@@ -1389,7 +1389,7 @@ func connectionStringSchema() *pluginsdk.Schema {
 			Schema: map[string]*pluginsdk.Schema{
 				"name": {
 					Type:     pluginsdk.TypeString,
-					Required: true,
+					Computed: true,
 				},
 
 				"type": {

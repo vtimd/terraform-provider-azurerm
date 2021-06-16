@@ -36,7 +36,6 @@ type WindowsWebAppModel struct {
 	HttpsOnly                     bool                     `tfschema:"https_only"`
 	Identity                      []helpers.Identity       `tfschema:"identity"`
 	LogsConfig                    []LogsConfig             `tfschema:"logs"`
-	MetaData                      map[string]string        `tfschema:"app_metadata"`
 	SiteConfig                    []SiteConfigWindows      `tfschema:"site_config"`
 	StorageAccounts               []StorageAccount         `tfschema:"storage_account"`
 	ConnectionStrings             []ConnectionString       `tfschema:"connection_string"`
@@ -155,14 +154,6 @@ func (r WindowsWebAppResource) Attributes() map[string]*pluginsdk.Schema {
 		"kind": {
 			Type:     pluginsdk.TypeString,
 			Computed: true,
-		},
-
-		"app_metadata": {
-			Type:     pluginsdk.TypeMap,
-			Computed: true,
-			Elem: &pluginsdk.Schema{
-				Type: pluginsdk.TypeString,
-			},
 		},
 
 		"outbound_ip_addresses": {
@@ -522,6 +513,7 @@ func (r WindowsWebAppResource) Read() sdk.ResourceFunc {
 				}
 				state.SiteCredentials = []helpers.SiteCredential{siteCredential}
 			}
+
 			return metadata.Encode(&state)
 		},
 	}

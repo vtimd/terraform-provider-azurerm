@@ -55,6 +55,7 @@ func (r AppServicePlanResource) Arguments() map[string]*schema.Schema {
 		"name": {
 			Type:         pluginsdk.TypeString,
 			Required:     true,
+			ForceNew:     true,
 			ValidateFunc: validate.ServicePlanName,
 		},
 
@@ -109,7 +110,7 @@ func (r AppServicePlanResource) Arguments() map[string]*schema.Schema {
 			Type:         pluginsdk.TypeInt,
 			Optional:     true,
 			Computed:     true,
-			ValidateFunc: nil, // TODO - IntAtLeast?
+			ValidateFunc: validation.IntAtLeast(1),
 		},
 
 		"maximum_elastic_worker_count": {

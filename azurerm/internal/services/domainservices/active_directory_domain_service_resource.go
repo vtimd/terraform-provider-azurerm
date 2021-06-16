@@ -605,32 +605,6 @@ func expandDomainServiceNotifications(input []interface{}) *aad.NotificationSett
 	}
 }
 
-func expandDomainServiceResourceForest(input []interface{}) *aad.ResourceForestSettings {
-	if len(input) == 0 {
-		return nil
-	}
-
-	in := input[0].(map[string]interface{})
-
-	forestTrusts := make([]aad.ForestTrust, 0)
-
-	for _, inTrust := range in["forest_trust"].([]map[string]interface{}) {
-		remoteDnsIps := strings.Join(inTrust["remote_dns_ips"].([]string), ",")
-		forestTrusts = append(forestTrusts, aad.ForestTrust{
-			TrustedDomainFqdn: utils.String(inTrust["trusted_domain_fqdn"].(string)),
-			TrustDirection:    utils.String(inTrust["trust_direction"].(string)),
-			FriendlyName:      utils.String(inTrust["name"].(string)),
-			RemoteDNSIps:      utils.String(remoteDnsIps),
-			TrustPassword:     utils.String(inTrust["trust_password"].(string)),
-		})
-	}
-
-	return &aad.ResourceForestSettings{
-		ResourceForest: utils.String(in["resource_forest"].(string)),
-		Settings:       &forestTrusts,
-	}
-}
-
 func expandDomainServiceSecurity(input []interface{}) *aad.DomainSecuritySettings {
 	if len(input) == 0 {
 		return nil

@@ -63,7 +63,6 @@ func (r AppServiceSourceControlResource) Arguments() map[string]*pluginsdk.Schem
 				string(web.ScmTypeOneDrive),
 				string(web.ScmTypeTfs),
 				string(web.ScmTypeVSO),
-				string(web.ScmTypeVSTSRM), // Should this be supported since it's controlled from ADO?
 			}, false),
 		},
 

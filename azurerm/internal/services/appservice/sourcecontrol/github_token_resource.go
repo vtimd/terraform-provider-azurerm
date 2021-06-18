@@ -114,7 +114,6 @@ func (r AppServiceGitHubTokenResource) Delete() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: 5 * time.Minute,
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
-
 			client := metadata.Client.AppService.BaseClient
 
 			sourceControlOAuth := web.SourceControl{

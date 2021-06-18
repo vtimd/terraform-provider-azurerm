@@ -3,6 +3,7 @@ package sourcecontrol_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -28,6 +29,45 @@ func TestAccSourceControlResource_windowsExternalGit(t *testing.T) {
 				check.That(data.ResourceName).Key("scm_type").HasValue("ExternalGit"),
 			),
 		},
+		data.ImportStep(),
+	})
+}
+
+func TestAccSourceControlResource_windowsLocalGit(t *testing.T) {
+	data := acceptance.BuildTestData(t, "azurerm_app_service_source_control", "test")
+	r := AppServiceSourceControlResource{}
+
+	data.ResourceTest(t, r, []resource.TestStep{
+		{
+			Config: r.windowsLocalGit(data),
+			Check: resource.ComposeTestCheckFunc(
+				check.That(data.ResourceName).ExistsInAzure(r),
+				check.That(data.ResourceName).Key("scm_type").HasValue("LocalGit"),
+				check.That(data.ResourceName).Key("repo_url").HasValue(fmt.Sprintf("https://acctestwa-%d.scm.azurewebsites.net", data.RandomInteger)),
+			),
+		},
+		data.ImportStep(),
+	})
+}
+
+func TestAccSourceControlResource_windowsGitHubAction(t *testing.T) {
+	if ok := os.Getenv("ARM_GITHUB_ACCESS_TOKEN"); ok == "" {
+		t.Skip("Skipping as `ARM_GITHUB_ACCESS_TOKEN` is not specified")
+	}
+
+	data := acceptance.BuildTestData(t, "azurerm_app_service_source_control", "test")
+	r := AppServiceSourceControlResource{}
+
+	data.ResourceTest(t, r, []resource.TestStep{
+		{
+			Config: r.windowsGitHubAction(data),
+			Check: resource.ComposeTestCheckFunc(
+				check.That(data.ResourceName).ExistsInAzure(r),
+				check.That(data.ResourceName).Key("scm_type").HasValue("LocalGit"),
+				check.That(data.ResourceName).Key("repo_url").HasValue(fmt.Sprintf("https://acctestwa-%d.scm.azurewebsites.net", data.RandomInteger)),
+			),
+		},
+		data.ImportStep(),
 	})
 }
 
@@ -43,6 +83,43 @@ func TestAccSourceControlResource_linuxExternalGit(t *testing.T) {
 				check.That(data.ResourceName).Key("scm_type").HasValue("ExternalGit"),
 			),
 		},
+		data.ImportStep(),
+	})
+}
+
+func TestAccSourceControlResource_linuxLocalGit(t *testing.T) {
+	data := acceptance.BuildTestData(t, "azurerm_app_service_source_control", "test")
+	r := AppServiceSourceControlResource{}
+
+	data.ResourceTest(t, r, []resource.TestStep{
+		{
+			Config: r.linuxLocalGit(data),
+			Check: resource.ComposeTestCheckFunc(
+				check.That(data.ResourceName).ExistsInAzure(r),
+				check.That(data.ResourceName).Key("scm_type").HasValue("LocalGit"),
+				check.That(data.ResourceName).Key("repo_url").HasValue(fmt.Sprintf("https://acctestwa-%d.scm.azurewebsites.net", data.RandomInteger)),
+			),
+		},
+		data.ImportStep(),
+	})
+}
+
+func TestAccSourceControlResource_linuxGitHubAction(t *testing.T) {
+	if ok := os.Getenv("ARM_GITHUB_ACCESS_TOKEN"); ok == "" {
+		t.Skip("Skipping as `ARM_GITHUB_ACCESS_TOKEN` is not specified")
+	}
+
+	data := acceptance.BuildTestData(t, "azurerm_app_service_source_control", "test")
+	r := AppServiceSourceControlResource{}
+
+	data.ResourceTest(t, r, []resource.TestStep{
+		{
+			Config: r.linuxGitHubAction(data),
+			Check: resource.ComposeTestCheckFunc(
+				check.That(data.ResourceName).ExistsInAzure(r),
+			),
+		},
+		data.ImportStep(),
 	})
 }
 
@@ -98,6 +175,115 @@ resource "azurerm_app_service_source_control" "test" {
 }
 
 `, baseLinuxAppTemplate(data))
+}
+
+func (r AppServiceSourceControlResource) windowsLocalGit(data acceptance.TestData) string {
+	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
+%s
+
+resource "azurerm_app_service_source_control" "test" {
+  app_id   = azurerm_windows_web_app.test.id
+  acm_type = "LocalGit"
+}
+
+`, baseWindowsAppTemplate(data))
+}
+
+func (r AppServiceSourceControlResource) linuxLocalGit(data acceptance.TestData) string {
+	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
+%s
+
+resource "azurerm_app_service_source_control" "test" {
+  app_id   = azurerm_linux_web_app.test.id
+  scm_type = "LocalGit"
+}
+
+`, baseLinuxAppTemplate(data))
+}
+
+// TODO - Figure this out, GHA items here are not well documented
+func (r AppServiceSourceControlResource) windowsGitHubAction(data acceptance.TestData) string {
+	token := os.Getenv("ARM_GITHUB_ACCESS_TOKEN")
+	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
+%s
+
+resource azurerm_app_service_github_token test {
+  token = "%s"
+}
+
+resource "azurerm_app_service_source_control" "test" {
+  app_id = azurerm_windows_web_app.test.id
+  repo_url = "https://github.com/jackofallops/azure-app-service-static-site-tests.git"
+  scm_type = "GitHub"
+
+  github_action_configuration {
+    linux_action           = true
+    generate_workflow_file = true
+    
+    container_configuration {
+      registry_url = ""
+      image_name   = ""
+    }
+
+    code_configuration {
+      runtime_stack   = ""
+      runtime_version = ""
+    }
+  }
+
+}
+
+`, baseWindowsAppTemplate(data), token)
+}
+
+// TODO - Figure this out, GHA items here are not well documented
+func (r AppServiceSourceControlResource) linuxGitHubAction(data acceptance.TestData) string {
+	token := os.Getenv("ARM_GITHUB_ACCESS_TOKEN")
+	return fmt.Sprintf(`
+provider "azurerm" {
+  features {}
+}
+
+%s
+
+resource azurerm_app_service_github_token test {
+  token = "%s"
+}
+
+resource "azurerm_app_service_source_control" "test" {
+  app_id   = azurerm_linux_web_app.test.id
+  repo_url = "https://github.com/jackofallops/azure-app-service-static-site-tests.git"
+  scm_type = "GitHub"
+
+  github_action_configuration {
+    linux_action           = true
+    generate_workflow_file = true
+    
+    container_configuration {
+      registry_url = ""
+      image_name   = ""
+    }
+
+    code_configuration {
+      runtime_stack   = ""
+      runtime_version = ""
+    }
+  }
+}
+
+`, baseLinuxAppTemplate(data), token)
 }
 
 func baseWindowsAppTemplate(data acceptance.TestData) string {

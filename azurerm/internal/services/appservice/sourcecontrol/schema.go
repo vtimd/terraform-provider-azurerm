@@ -3,9 +3,7 @@ package sourcecontrol
 import (
 	"github.com/Azure/azure-sdk-for-go/services/web/mgmt/2020-12-01/web"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/terraform-providers/terraform-provider-azuread/azuread/helpers/validate"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/pluginsdk"
-	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/validation"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/utils"
 )
 
@@ -42,15 +40,15 @@ func githubActionConfigSchema() *pluginsdk.Schema {
 					Elem: &pluginsdk.Resource{
 						Schema: map[string]*schema.Schema{
 							"registry_url": {
-								Type:         pluginsdk.TypeString,
-								Required:     true,
-								ValidateFunc: validation.IsURLWithHTTPorHTTPS,
+								Type:     pluginsdk.TypeString,
+								Required: true,
+								//ValidateFunc: validation.IsURLWithHTTPorHTTPS,
 							},
 
 							"image_name": {
-								Type:         pluginsdk.TypeString,
-								Required:     true,
-								ValidateFunc: validate.NoEmptyStrings,
+								Type:     pluginsdk.TypeString,
+								Required: true,
+								//ValidateFunc: validate.NoEmptyStrings,
 							},
 
 							"registry_username": {
@@ -74,15 +72,15 @@ func githubActionConfigSchema() *pluginsdk.Schema {
 					Elem: &pluginsdk.Resource{
 						Schema: map[string]*pluginsdk.Schema{
 							"runtime_stack": {
-								Type:         pluginsdk.TypeString,
-								Required:     true,
-								ValidateFunc: validate.NoEmptyStrings,
+								Type:     pluginsdk.TypeString,
+								Required: true,
+								//ValidateFunc: validate.NoEmptyStrings,
 							},
 
 							"runtime_version": {
-								Type:         pluginsdk.TypeString,
-								Optional:     true,                    // Should this be required?
-								ValidateFunc: validate.NoEmptyStrings, // Can this be empty?
+								Type:     pluginsdk.TypeString,
+								Optional: true, // Should this be required?
+								//ValidateFunc: validate.NoEmptyStrings, // Can this be empty?
 							},
 						},
 					},
@@ -90,11 +88,13 @@ func githubActionConfigSchema() *pluginsdk.Schema {
 
 				"linux_action": {
 					Type:     pluginsdk.TypeBool,
+					Optional: true,
 					Computed: true,
 				},
 
 				"generate_workflow_file": {
 					Type:     pluginsdk.TypeBool,
+					Optional: true,
 					Computed: true,
 				},
 			},

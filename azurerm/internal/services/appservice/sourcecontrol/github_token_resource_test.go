@@ -17,6 +17,10 @@ import (
 type AppServiceGitHubTokenResource struct{}
 
 func TestAccSourceControlGitHubToken_basic(t *testing.T) {
+	if ok := os.Getenv("ARM_GITHUB_ACCESS_TOKEN"); ok == "" {
+		t.Skip("Skipping as `ARM_GITHUB_ACCESS_TOKEN` is not specified")
+	}
+
 	data := acceptance.BuildTestData(t, "azurerm_app_service_github_token", "test")
 	r := AppServiceGitHubTokenResource{}
 
@@ -57,5 +61,4 @@ resource azurerm_app_service_github_token test {
   token = "%s"
 }
 `, token)
-
 }

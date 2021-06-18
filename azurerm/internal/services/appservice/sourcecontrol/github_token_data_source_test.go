@@ -2,6 +2,7 @@ package sourcecontrol_test
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -12,6 +13,10 @@ import (
 type AppServiceGithubTokenDataSource struct{}
 
 func TestAccSourceControlGitHubTokenDataSource_basic(t *testing.T) {
+	if ok := os.Getenv("ARM_GITHUB_ACCESS_TOKEN"); ok == "" {
+		t.Skip("Skipping as `ARM_GITHUB_ACCESS_TOKEN` is not specified")
+	}
+
 	data := acceptance.BuildTestData(t, "data.azurerm_app_service_github_token", "test")
 	r := AppServiceGithubTokenDataSource{}
 

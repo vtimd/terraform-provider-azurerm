@@ -40,9 +40,10 @@ func (r AppServiceSourceControlResource) Arguments() map[string]*pluginsdk.Schem
 		},
 
 		"repo_url": {
-			Type:     pluginsdk.TypeString,
-			Required: true,
-			// TODO - Validation?
+			Type:         pluginsdk.TypeString,
+			Optional:     true,
+			Computed:     true,
+			ValidateFunc: validation.StringIsNotEmpty,
 		},
 
 		"scm_type": {
@@ -59,7 +60,7 @@ func (r AppServiceSourceControlResource) Arguments() map[string]*pluginsdk.Schem
 				string(web.ScmTypeExternalHg),
 				string(web.ScmTypeGitHub),
 				string(web.ScmTypeLocalGit),
-				string(web.ScmTypeNone), // Default when not configured, remove this?
+				string(web.ScmTypeNone),
 				string(web.ScmTypeOneDrive),
 				string(web.ScmTypeTfs),
 				string(web.ScmTypeVSO),
@@ -68,14 +69,15 @@ func (r AppServiceSourceControlResource) Arguments() map[string]*pluginsdk.Schem
 
 		"branch": {
 			Type:         pluginsdk.TypeString,
-			Required:     true,
+			Optional:     true,
+			Computed:     true,
 			ValidateFunc: validation.StringIsNotEmpty,
 		},
 
 		"manual_integration": {
 			Type:     pluginsdk.TypeBool,
 			Optional: true,
-			Default:  true,
+			Default:  false,
 		},
 
 		"uses_github_action": {
@@ -136,10 +138,13 @@ func (r AppServiceSourceControlResource) Create() sdk.ResourceFunc {
 				return metadata.ResourceRequiresImport(r.ResourceType(), id)
 			}
 
+			// Guard rails...
+			if appSourceControl.SCMType == string(web.ScmTypeLocalGit) && (appSourceControl.UseMercurial || appSourceControl.RollbackEnabled || appSourceControl.ManualIntegration || appSourceControl.UsesGithubAction || len(appSourceControl.GithubActionConfiguration) != 0) {
+				return fmt.Errorf("cannot set any additional configuration when `scm_type` is `LocalGit`")
+			}
+
 			sourceControl := web.SiteSourceControl{
 				SiteSourceControlProperties: &web.SiteSourceControlProperties{
-					RepoURL:                   utils.String(appSourceControl.RepoURL),
-					Branch:                    utils.String(appSourceControl.Branch),
 					IsManualIntegration:       utils.Bool(appSourceControl.ManualIntegration),
 					IsGitHubAction:            utils.Bool(appSourceControl.UsesGithubAction),
 					DeploymentRollbackEnabled: utils.Bool(appSourceControl.RollbackEnabled),
@@ -147,17 +152,42 @@ func (r AppServiceSourceControlResource) Create() sdk.ResourceFunc {
 				},
 			}
 
+			sitePatch := web.SitePatchResource{
+				SitePatchResourceProperties: &web.SitePatchResourceProperties{
+					SiteConfig: &web.SiteConfig{
+						ScmType: web.ScmTypeLocalGit,
+					},
+				},
+			}
+
+			if appSourceControl.RepoURL != "" {
+				sourceControl.SiteSourceControlProperties.RepoURL = utils.String(appSourceControl.RepoURL)
+			} else if appSourceControl.SCMType != string(web.ScmTypeLocalGit) {
+				return fmt.Errorf("`repo_url` must be set unless `scm_type` is `LocalGit`")
+			}
+
+			if appSourceControl.Branch != "" {
+				sourceControl.SiteSourceControlProperties.Branch = utils.String(appSourceControl.Branch)
+			}
+
 			if len(appSourceControl.GithubActionConfiguration) != 0 {
 				sourceControl.SiteSourceControlProperties.GitHubActionConfiguration = expandGithubActionConfig(appSourceControl.GithubActionConfiguration)
 			}
 
-			createFuture, err := client.CreateOrUpdateSourceControl(ctx, id.ResourceGroup, id.SiteName, sourceControl)
-			if err != nil {
-				return fmt.Errorf("creating Source Control configuration for %s: %v", id, err)
-			}
+			switch appSourceControl.SCMType {
+			case string(web.ScmTypeLocalGit):
+				if _, err := client.Update(ctx, id.ResourceGroup, id.SiteName, sitePatch); err != nil {
+					return fmt.Errorf("setting App Source Control Type for %s: %v", id, err)
+				}
+			default:
+				if _, err := client.Update(ctx, id.ResourceGroup, id.SiteName, sitePatch); err != nil {
+					return fmt.Errorf("setting App Source Control Type for %s: %v", id, err)
+				}
 
-			if err := createFuture.WaitForCompletionRef(ctx, client.Client); err != nil {
-				return fmt.Errorf("waiting for Source Control Configuration for %s: %+v", id, err)
+				_, err = client.UpdateSourceControl(ctx, id.ResourceGroup, id.SiteName, sourceControl)
+				if err != nil {
+					return fmt.Errorf("creating Source Control configuration for %s: %v", id, err)
+				}
 			}
 
 			metadata.SetID(id)

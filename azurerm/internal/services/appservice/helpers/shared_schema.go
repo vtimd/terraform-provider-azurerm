@@ -244,50 +244,6 @@ type SourceControl struct {
 	RollbackEnabled   bool   `tfschema:"rollback_enabled"`
 }
 
-// SourceControlSchema TODO - Make a separate resource
-func SourceControlSchema() *pluginsdk.Schema {
-	return &pluginsdk.Schema{
-		Type:          pluginsdk.TypeList,
-		Optional:      true,
-		MaxItems:      1,
-		Computed:      true,
-		ConflictsWith: []string{"site_config.0.scm_type"},
-		Elem: &pluginsdk.Resource{
-			Schema: map[string]*pluginsdk.Schema{
-				"repo_url": {
-					Type:     pluginsdk.TypeString,
-					Optional: true,
-					Computed: true,
-				},
-
-				"branch": {
-					Type:     pluginsdk.TypeString,
-					Optional: true,
-					Computed: true,
-				},
-
-				"manual_integration": {
-					Type:     pluginsdk.TypeBool,
-					Optional: true,
-					Computed: true,
-				},
-
-				"use_mercurial": {
-					Type:     pluginsdk.TypeBool,
-					Optional: true,
-					Computed: true,
-				},
-
-				"rollback_enabled": {
-					Type:     pluginsdk.TypeBool,
-					Optional: true,
-					Computed: true,
-				},
-			},
-		},
-	}
-}
-
 type SiteCredential struct {
 	Username string `tfschema:"name"`
 	Password string `tfschema:"password"`

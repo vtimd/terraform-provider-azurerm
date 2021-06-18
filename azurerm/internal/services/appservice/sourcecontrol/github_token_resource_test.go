@@ -29,6 +29,7 @@ func TestAccSourceControlGitHubToken_basic(t *testing.T) {
 			Config: r.basic(),
 			Check: resource.ComposeTestCheckFunc(
 				check.That(data.ResourceName).ExistsInAzure(r),
+				check.That(data.ResourceName).Key("token").IsSet(),
 			),
 		},
 		data.ImportStep(),

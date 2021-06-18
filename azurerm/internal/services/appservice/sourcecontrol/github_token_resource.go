@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/appservice/validate"
+
 	"github.com/Azure/azure-sdk-for-go/services/web/mgmt/2020-12-01/web"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/sdk"
@@ -132,7 +134,7 @@ func (r AppServiceGitHubTokenResource) Delete() sdk.ResourceFunc {
 }
 
 func (r AppServiceGitHubTokenResource) IDValidationFunc() pluginsdk.SchemaValidateFunc {
-	panic("implement me")
+	return validate.SourceControlGitHubTokenID
 }
 
 func (r AppServiceGitHubTokenResource) Update() sdk.ResourceFunc {

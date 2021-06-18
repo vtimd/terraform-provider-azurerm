@@ -13,5 +13,5 @@ func SourceControlGitHubTokenID(input interface{}, key string) (warnings []strin
 	if v != expectedID {
 		errors = append(errors, fmt.Errorf("ID must be exactly %q", expectedID))
 	}
-	return nil, nil
+	return
 }

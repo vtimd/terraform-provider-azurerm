@@ -224,14 +224,14 @@ resource azurerm_app_service_github_token test {
 }
 
 resource "azurerm_app_service_source_control" "test" {
-  app_id = azurerm_windows_web_app.test.id
+  app_id   = azurerm_windows_web_app.test.id
   repo_url = "https://github.com/jackofallops/azure-app-service-static-site-tests.git"
   scm_type = "GitHub"
 
   github_action_configuration {
     linux_action           = true
     generate_workflow_file = true
-    
+
     container_configuration {
       registry_url = ""
       image_name   = ""
@@ -270,7 +270,7 @@ resource "azurerm_app_service_source_control" "test" {
   github_action_configuration {
     linux_action           = true
     generate_workflow_file = true
-    
+
     container_configuration {
       registry_url = ""
       image_name   = ""

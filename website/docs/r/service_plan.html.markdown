@@ -1,5 +1,5 @@
 ---
-subcategory: "AppService"
+subcategory: "App Service (Web Apps)"
 layout: "azurerm"
 page_title: "Azure Resource Manager: azurerm_service_plan"
 description: |-
@@ -25,10 +25,10 @@ resource "azurerm_resource_group" "example" {
 }
 
 resource "azurerm_service_plan" "example" {
-  name = "example"
+  name                = "example"
   resource_group_name = azurerm_resource_group.example.name
-  location = "West Europe"
-  sku_name = "P1V2"
+  location            = "West Europe"
+  sku_name            = "P1V2"
 }
 ```
 

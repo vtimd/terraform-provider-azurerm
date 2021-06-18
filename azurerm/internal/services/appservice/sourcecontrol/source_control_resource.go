@@ -60,7 +60,6 @@ func (r AppServiceSourceControlResource) Arguments() map[string]*pluginsdk.Schem
 				string(web.ScmTypeExternalHg),
 				string(web.ScmTypeGitHub),
 				string(web.ScmTypeLocalGit),
-				string(web.ScmTypeNone),
 				string(web.ScmTypeOneDrive),
 				string(web.ScmTypeTfs),
 				string(web.ScmTypeVSO),
@@ -143,6 +142,10 @@ func (r AppServiceSourceControlResource) Create() sdk.ResourceFunc {
 				return fmt.Errorf("cannot set any additional configuration when `scm_type` is `LocalGit`")
 			}
 
+			if len(appSourceControl.GithubActionConfiguration) != 0 && appSourceControl.SCMType != string(web.ScmTypeGitHub) {
+				return fmt.Errorf("cannot specify GitHub Action configuration unless `scm_type` is set to `GitHub`")
+			}
+
 			sourceControl := web.SiteSourceControl{
 				SiteSourceControlProperties: &web.SiteSourceControlProperties{
 					IsManualIntegration:       utils.Bool(appSourceControl.ManualIntegration),
@@ -154,9 +157,7 @@ func (r AppServiceSourceControlResource) Create() sdk.ResourceFunc {
 
 			sitePatch := web.SitePatchResource{
 				SitePatchResourceProperties: &web.SitePatchResourceProperties{
-					SiteConfig: &web.SiteConfig{
-						ScmType: web.ScmTypeLocalGit,
-					},
+					SiteConfig: &web.SiteConfig{},
 				},
 			}
 
@@ -170,12 +171,19 @@ func (r AppServiceSourceControlResource) Create() sdk.ResourceFunc {
 				sourceControl.SiteSourceControlProperties.Branch = utils.String(appSourceControl.Branch)
 			}
 
-			if len(appSourceControl.GithubActionConfiguration) != 0 {
-				sourceControl.SiteSourceControlProperties.GitHubActionConfiguration = expandGithubActionConfig(appSourceControl.GithubActionConfiguration)
-			}
-
 			switch appSourceControl.SCMType {
 			case string(web.ScmTypeLocalGit):
+				sitePatch.SiteConfig.ScmType = web.ScmTypeLocalGit
+				if _, err := client.Update(ctx, id.ResourceGroup, id.SiteName, sitePatch); err != nil {
+					return fmt.Errorf("setting App Source Control Type for %s: %v", id, err)
+				}
+			case string(web.ScmTypeGitHub):
+				sitePatch.SiteConfig.ScmType = web.ScmTypeGitHub
+				sourceControl.SiteSourceControlProperties.GitHubActionConfiguration = expandGithubActionConfig(appSourceControl.GithubActionConfiguration)
+				_, err = client.UpdateSourceControl(ctx, id.ResourceGroup, id.SiteName, sourceControl)
+				if err != nil {
+					return fmt.Errorf("creating Source Control configuration for %s: %v", id, err)
+				}
 				if _, err := client.Update(ctx, id.ResourceGroup, id.SiteName, sitePatch); err != nil {
 					return fmt.Errorf("setting App Source Control Type for %s: %v", id, err)
 				}

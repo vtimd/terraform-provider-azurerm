@@ -1,5 +1,0 @@
-prefix = "vtimd-"
-location = "South Central US"
-size = "Standard_D2_v3"
-username = "vtimd"
-password = "wDeNmV-mzLhe_jERetn7"

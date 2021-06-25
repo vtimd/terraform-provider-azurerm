@@ -9,3 +9,11 @@ variable "location" {
 variable "size" {
   description = "The Azure Virtual Machine size that is desired."
 }
+
+variable "username" {
+  description = "The Azure Virtual Machine size that is desired."
+}
+
+variable "password" {
+  description = "The Azure Virtual Machine size that is desired."
+}

@@ -5,3 +5,7 @@ variable "prefix" {
 variable "location" {
   description = "The Azure Region in which all resources in this example should be created."
 }
+
+variable "size" {
+  description = "The Azure Virtual Machine size that is desired."
+}
